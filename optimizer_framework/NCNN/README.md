@@ -3,7 +3,8 @@ ncnn framework
 [ncnn](https://github.com/Tencent/ncnn) designed by Tencent. This framework optimized models Neural Network for mobile-platform.
 
 # how to use ?
-ncnn support for multi-platform like android, ios, linux, raspberry pi, jetson nano, arm,...
+## build
+  > ncnn support for multi-platform like android, ios, linux, raspberry pi, jetson nano, arm,...
 and below guideline for linux platform. you can find something else in [original guideline](https://github.com/Tencent/ncnn#howto)
   - Step 1: clone repository
   
@@ -21,3 +22,7 @@ and below guideline for linux platform. you can find something else in [original
       
       `make install`
    - Step 4: get `include header file` & lib `libncnn.a` in folder `install`
+## convert model to ncnn format (file.bin & file.param)
+### pytorch
+### tensorflow
+### mxnet
