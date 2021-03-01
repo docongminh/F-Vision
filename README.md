@@ -15,10 +15,6 @@ F-Vision project: Face Recognition, Masked Face Detection, Masked Face Recogniti
   - Build Models
   - Training
   - Evaluate
-# Tools usage
-  - Evaluate Model
-  - Convert models
-  - Generate benchmark models
 # Optimize model: Weight pruning, Quantization
   - Build Weight pruning & evaluate process pruning weights
   - Build quantization & evaluate process quantize models
