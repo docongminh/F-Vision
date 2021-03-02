@@ -15,15 +15,17 @@ def split_dataset(data_root):
     train_list = []
     num_class = len(os.listdir(data_root))
     for class_name in os.listdir(data_root):
-        path = os.path.join(data_root, class_name)
-        for image in os.listdir(path):
+        fps_class_name = os.path.join(data_root, class_name)
+        for image in os.listdir(fps_class_name):
             image_name = os.path.join(class_name, image) 
             train_list.append((image_name, int(class_name)))
+    print('num_class ', num_class)
+    print('num data point', len(train_list))
     return train_list, num_class
 
 
 class ImageDataset(Dataset):
-    def __init__(self, data_root, image_shape = (128,128), crop_eye=False):
+    def __init__(self, data_root, image_shape = (112,112), crop_eye=False):
         self.data_root = data_root
         self.train_list, self.num_class = split_dataset(data_root)
         self.crop_eye = crop_eye
@@ -44,6 +46,7 @@ class ImageDataset(Dataset):
         if image.ndim == 2:
             image = image[:, :, np.newaxis]
         norm_img = normalize_image(image)
+        # inital zeros matrix for test
         # norm_img = torch.Tensor(np.zeros((3,112,112)))
         return norm_img, image_label
    
