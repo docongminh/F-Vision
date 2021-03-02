@@ -1,6 +1,5 @@
 
 import sys
-import yaml
 sys.path.append('../../')
 from backbone.ResNets import Resnet
 from backbone.MobileFaceNets import MobileFaceNet

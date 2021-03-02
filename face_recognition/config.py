@@ -1,12 +1,10 @@
 import torch 
 # invironment training cuda:0 or cpu 
 # device = torch.device('cuda' if torch.cuda.is_available() else "cpu")
-device = torch.device("cuda")
+device = torch.device("cpu")
 
-data_root = '/home/minglee/Documents/aiProjects/git_clone/Dataset/VN-celeb' 
+data_root = '/home/minglee/Documents/aiProjects/RepoGithub/Dataset/VN-celeb' 
 #help = "The root folder of training set."
-train_file = '/export2/wangjun492/face_database/facex-zoo/private_file/train_data/deepglint/msceleb_deepglint_train_file.txt' 
-#help = "The training file path."
 backbone_type =  'ResNet'  
 # ['ir', 'ir_se'], 'mode should be ir or ir_se' ,[50, 100, 152], 'num_layers should be 50,100, or 152'
 # help = "Mobilefacenets, Resnet."  
@@ -14,27 +12,27 @@ loss_type = 'ArcFace'
 # help = "mv-softmax, arcface, npc-face."
 lr = 0.1 
 # help='The initial learning rate.'
-out_dir = '/home/minglee/Documents/aiProjects/git_clone/trash/history/weights' 
+out_dir = '/home/minglee/Documents/aiProjects/RepoGithub/F-Vision/face_recognition/trash/Output_models/history/weights' 
 # help = "The folder to save models."
-epoches = 18 
+epoches = 4 
 # help = 'The training epoches.'
 step = '10, 13, 16' 
 # help = 'Step for lr.'
-print_freq = 200 
+print_freq = 2 
 # help = 'The print frequency for training state.'
-save_freq = 3000 
+save_freq = 100 
 # help = 'The save frequency for training state.'
 batch_size = 2
 # help='The training batch size over all gpus.'
 momentum = 0.9 
 # help = 'The momentum for sgd.'
-log_dir = '/home/minglee/Documents/aiProjects/git_clone/trash/history/log' 
+log_dir = '/home/minglee/Documents/aiProjects/RepoGithub/F-Vision/face_recognition/trash/Output_models/history/log' 
 # help = 'The directory to save log.log'
-tensorboardx_logdir = 'arc-resnet' 
+tensorboardx_logdir = 'tensorboard' 
 # help = 'The directory to save tensorboardx logs'
-pretrain_model = 'arc_resnet_epoch_8.pt'
+pretrain_model_path = '/home/minglee/Documents/aiProjects/RepoGithub/F-Vision/face_recognition/trash/Output_models/history/weights/Final_epoch_1.pt'
 # help = 'The path of pretrained model'
-resume = False
+resume = True
 # help = 'Whether to resume from a checkpoint.'
 num_class = 72778
 #number of class
@@ -67,22 +65,7 @@ loss_paramenter = {'ArcFace':
                         {'feat_dim': feat_dim,
                         'num_class': num_class,
                         'margin': 0.35,
-                        'scale': 32},
-                    'AdaCos':
-                        {'feat_dim': feat_dim,
-                        'num_class': num_class},
-                    'AdaM-Softmax':
-                            {'feat_dim': feat_dim,
-                            'num_class': num_class,
-                            'scale': 32,
-                            'lamda': 70.0},
-                    'MV-Softmax':
-                            {'feat_dim': feat_dim,
-                            'num_class': num_class,
-                            'is_am': 1,
-                            'margin': 0.35,
-                            'mv_weight': 1.12,
-                            'scale': 32}
+                        'scale': 32}
                     }
 
 
