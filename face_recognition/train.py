@@ -6,7 +6,7 @@ import shutil
 import argparse
 import logging as logger
 from tqdm import tqdm 
-
+from sklearn import metrics
 
 from torch import optim
 from torch.utils.data import DataLoader
@@ -15,9 +15,12 @@ from tensorboardX import SummaryWriter
 sys.path.append('../../')
 from utils.AverageMeter import AverageMeter
 from dataset_utils.train_dataset import ImageDataset
+from dataset_utils.evaluate_dataset import get_evaluate_dataset_and_loader
+from dataset_utils.evaluate_helpers import *
 from backbone.backbone_def import BackboneFactory
 from losses.loss_def import LossFactory
-
+from datetime import datetime, timedelta
+import time
 import config 
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -49,8 +52,11 @@ class FaceModel(torch.nn.Module):
         feat = self.backbone.forward(data)
         pred = self.loss.forward(feat, label)
         return pred
+    def feed_emb(self, data): 
+        return self.backbone.forward(data) 
+    
 class FaceTrainer(object): 
-    def __init__(self, conf):
+    def __init__(self, conf, inference=False):
         self.step_loop = 0 
         # init tensorboard writer history and paramenters 
         if not os.path.exists(conf.out_dir):
@@ -88,8 +94,31 @@ class FaceTrainer(object):
         self.loss_meter = AverageMeter()
         if conf.resume: 
             self.load_state(conf, True)
+        # load evaluate dataset 
+        self.evaluate_dataset =  self.evaluate_loader(conf)
     
-    
+    def evaluate_loader(self, conf): 
+        validation_paths_dic = {
+                    "LFW" : os.path.join(conf.evaluate_dataset_root, 'lfw_112'),
+                    "CALFW" : os.path.join(conf.evaluate_dataset_root, 'calfw_112'),
+                    "CPLFW" : os.path.join(conf.evaluate_dataset_root, 'cplfw_112'),
+                    "CFP_FF" : os.path.join(conf.evaluate_dataset_root, 'cfp_112'),
+                    "CFP_FP" : os.path.join(conf.evaluate_dataset_root, 'cfp_112')}
+        validation_data_dic = {}
+        for val_type in conf.validations:
+            
+            self.print_and_log('Init dataset and loader for validation type: {}'.format(val_type))
+            print('Init dataset and loader for validation type: {}'.format(val_type))
+            
+            dataset, loader = get_evaluate_dataset_and_loader(root_dir=validation_paths_dic[val_type], 
+                                                                    type=val_type, 
+                                                                    num_workers=conf.num_workers, 
+                                                                    input_size=conf.image_shape, 
+                                                                    batch_size=conf.evaluate_batch_size)
+            validation_data_dic[val_type+'_dataset'] = dataset
+            validation_data_dic[val_type+'_loader'] = loader
+        return validation_data_dic 
+
     def load_state(self, conf, load_optimizer =False): 
         if os.path.exists(conf.pretrain_model_path): 
             state_dict = torch.load(conf.pretrain_model_path, map_location = conf.device )
@@ -99,6 +128,7 @@ class FaceTrainer(object):
             print('load model epoch {} and batch_id {} and load optimizer {} \n'.format(state_dict['epoch'], state_dict['batch_id'],load_optimizer))
         else: 
             print('pretrained model path not exist !')
+
     def save_state(self, saved_name, epoch, batch_id, conf): 
         state = {
             'state_dict': self.model.state_dict(),
@@ -107,15 +137,15 @@ class FaceTrainer(object):
             'batch_id': batch_id
         }
         torch.save(state, os.path.join(conf.out_dir, saved_name))
-    
+
     def get_lr(self):
         """Get the current learning rate from optimizer. 
         """
         for param_group in self.optimizer.param_groups:
             return param_group['lr']
         
-    def print_and_log(self, log_file_path, string_to_write):
-        with open(log_file_path, "a") as log_file:
+    def print_and_log(self, string_to_write):
+        with open(self.log_file_path, "a") as log_file:
             # t = "[" + str(datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S')) + "] " 
             # log_file.write(t + string_to_write + "\n")
             log_file.write(string_to_write + '\n')
@@ -143,14 +173,14 @@ class FaceTrainer(object):
                     loss_avg = self.loss_meter.avg
                     lr = self.get_lr()
                     log = 'Epoch %d, iter %d/%d, lr %f, loss %f'%(epoch, batch_idx, len(self.data_loader), lr, loss_avg)
-                    self.print_and_log(self.log_file_path, log)
+                    self.print_and_log(log)
                     self.writer.add_scalar('Train_loss', loss.item(), self.step_loop)
                     log = 'Train loss %f step %d'%(loss.item(), self.step_loop)
-                    self.print_and_log( self.log_file_path, log)
+                    self.print_and_log(log)
                     self.writer.add_scalar('smooth_loss', loss_avg, self.step_loop)
                     self.writer.add_scalar('Train_lr', lr, self.step_loop)
                     log = 'Train_lr %f step %d'%(lr, self.step_loop)
-                    self.print_and_log( self.log_file_path, log)
+                    self.print_and_log(log)
                     self.loss_meter.reset()
                     
                 if (batch_idx + 1) % conf.save_freq == 0:
@@ -158,10 +188,44 @@ class FaceTrainer(object):
                     self.save_state(saved_name, epoch, batch_idx, conf)
                 batch_idx +=1
                 self.step_loop +=1
-                
+            print('epoch {}'.format(epoch))    
+            if epoch % conf.evaluate_every_epoch == 0: 
+                """
+                code evaluate dataset  
+                """
+                print('evaluating model ....')    
+                for val_type in conf.validations:
+                    dataset = self.evaluate_dataset[val_type+'_dataset']
+                    loader = self.evaluate_dataset[val_type+'_loader']
+                    self.model.eval()
+                    t = time.time()
+                    print('\n\nRunnning forward pass on {} images'.format(val_type))
+
+                    tpr, fpr, accuracy, val, val_std, far = evaluate_forward_pass(self.model, 
+                                                                                loader, 
+                                                                                dataset, 
+                                                                                conf.feat_dim, 
+                                                                                conf.device,
+                                                                                lfw_nrof_folds=conf.evaluate_nrof_folds, 
+                                                                                distance_metric= conf.distance_metric, 
+                                                                                subtract_mean=conf.evaluate_subtract_mean)
+
+                    self.print_and_log('\nEpoch: '+str(epoch))
+                    self.print_and_log('Accuracy: %2.5f+-%2.5f' % (np.mean(accuracy), np.std(accuracy)))
+                    self.print_and_log('Validation rate: %2.5f+-%2.5f @ FAR=%2.5f' % (val, val_std, far))
+
+                    auc = metrics.auc(fpr, tpr)
+                    self.print_and_log('Area Under Curve (AUC): %1.3f' % auc)
+
+                    time_for_val = int(time.time() - t)
+                    self.print_and_log('Total time for {} evaluation: {}'.format(val_type, timedelta(seconds=time_for_val)))
+                    print("\n")
+                        
+                    self.writer.add_scalar(val_type +"_accuracy", np.mean(accuracy), epoch)
+                            
             # save final every epoch 
             saved_name = 'Final_epoch_%d.pt' % epoch
-            self.save_state(saved_name, epoch, 0 , conf, self.optimizer)
+            self.save_state(saved_name, epoch, 0 , conf)
             self.lr_schedule.step()
         self.writer.close()                        
 
