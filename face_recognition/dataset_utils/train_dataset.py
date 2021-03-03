@@ -30,6 +30,7 @@ class ImageDataset(Dataset):
         self.train_list, self.num_class = split_dataset(data_root)
         self.crop_eye = crop_eye
         self.image_shape = image_shape
+        
     def __len__(self):
         return len(self.train_list)
     def __num_class__(self): 
@@ -50,4 +51,32 @@ class ImageDataset(Dataset):
         # norm_img = torch.Tensor(np.zeros((3,112,112)))
         return norm_img, image_label
    
+
+class EvaluateDataset(Dataset):
+    def __init__(self, data_root, actual_issame, image_shape = (112,112), crop_eye=False):
+        self.data_root = data_root
+        self.actual_issame = actual_issame
+        self.crop_eye = crop_eye
+        self.image_shape = image_shape 
+
+        self.nrof_embeddings = len(self.actual_issame)*2  # nrof_pairs * nrof_images_per_pair
+        self.labels_array = np.arange(0,self.nrof_embeddings)
+    def __len__(self):
+        return len(self.data_root) 
+        
+    def __getitem__(self, index):
+        image_path = self.data_root[index]
+        image = cv2.imread(image_path)
+        image_label = self.labels_array[index]
+        
+        if self.crop_eye:
+            image = image[:60, :]
+        image = cv2.resize(image, self.image_shape) #128 * 128
+        if random.random() > 0.5:
+            image = cv2.flip(image, 1)
+        if image.ndim == 2:
+            image = image[:, :, np.newaxis]
+        norm_img = normalize_image(image)
+        return norm_img, image_label
+
 
