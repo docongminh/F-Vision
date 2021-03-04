@@ -15,8 +15,8 @@ from tensorboardX import SummaryWriter
 sys.path.append('../../')
 from utils.AverageMeter import AverageMeter
 from dataset_utils.train_dataset import ImageDataset
-from dataset_utils.evaluate_dataset import get_evaluate_dataset_and_loader
-from dataset_utils.evaluate_helpers import *
+from dataset_utils.evaluate_dataset import get_val_data
+from dataset_utils.evaluate_helpers import perform_val
 from backbone.backbone_def import BackboneFactory
 from losses.loss_def import LossFactory
 from datetime import datetime, timedelta
@@ -57,24 +57,6 @@ class FaceModel(torch.nn.Module):
     
 class FaceTrainer(object): 
     def __init__(self, conf, inference=False):
-        self.step_loop = 0 
-        # init tensorboard writer history and paramenters 
-        if not os.path.exists(conf.out_dir):
-            os.makedirs(conf.out_dir)
-        if not os.path.exists(conf.log_dir):
-            os.makedirs(conf.log_dir)
-        tensorboardx_logdir = os.path.join(conf.log_dir, conf.tensorboardx_logdir)
-        
-        print('path of tensorboard: ', tensorboardx_logdir)
-        self.writer = SummaryWriter(log_dir=tensorboardx_logdir)    
-        # init history of train models 
-        self.log_file_path = os.path.join(conf.log_dir, 'history_training_log.txt')
-        # Load data
-        dataset = ImageDataset(conf.data_root, conf.image_shape)
-        self.num_class = conf.num_class = dataset.__num_class__()
-        self.data_loader = DataLoader(dataset, conf.batch_size, True, num_workers = 4, drop_last= True)
-        # Define criterion loss 
-        self.criterion = torch.nn.CrossEntropyLoss().to(conf.device)
         # Load backbone 
         backbone_factory = BackboneFactory(conf.backbone_type, conf)    
         # Load losses
@@ -83,40 +65,45 @@ class FaceTrainer(object):
         self.model = FaceModel(backbone_factory, loss_factory)
         print('Generated models {} deep layer {} type loss {} done !. \n'
               .format(conf.backbone_type,conf.model_parameter[conf.backbone_type]['depth'] ,conf.loss_type))
-        # load pretrained 
-        
         if conf.device.type != "cpu":    
             self.model = torch.nn.DataParallel(self.model).cuda()
-        # init optimizer lr_schedule and loss_meter     
-        parameters = [p for p in self.model.parameters() if p.requires_grad]
-        self.optimizer = optim.SGD(parameters, lr = conf.lr, momentum = conf.momentum, weight_decay = 1e-4)
-        self.lr_schedule = optim.lr_scheduler.MultiStepLR(self.optimizer, milestones = conf.milestones, gamma = 0.1)
-        self.loss_meter = AverageMeter()
-        if conf.resume: 
-            self.load_state(conf, True)
-        # load evaluate dataset 
-        self.evaluate_dataset =  self.evaluate_loader(conf)
-    
+        
+        if not inference: 
+            self.step_loop = 0 
+            # init tensorboard writer history and paramenters 
+            if not os.path.exists(conf.out_dir):
+                os.makedirs(conf.out_dir)
+            if not os.path.exists(conf.log_dir):
+                os.makedirs(conf.log_dir)
+            tensorboardx_logdir = os.path.join(conf.log_dir, conf.tensorboardx_logdir)
+            
+            print('path of tensorboard: ', tensorboardx_logdir)
+            self.writer = SummaryWriter(log_dir=tensorboardx_logdir)    
+            # init history of train models 
+            self.log_file_path = os.path.join(conf.log_dir, 'history_training_log.txt')
+            # Load data
+            dataset = ImageDataset(conf.data_root, conf.image_shape)
+            self.num_class = conf.num_class = dataset.__num_class__()
+            self.data_loader = DataLoader(dataset, conf.batch_size, True, num_workers = 4, drop_last= True)
+            # Define criterion loss 
+            self.criterion = torch.nn.CrossEntropyLoss().to(conf.device)
+            # load evaluate dataset 
+            self.evaluate_dataset =  self.evaluate_loader(conf)
+            # init optimizer lr_schedule and loss_meter     
+            parameters = [p for p in self.model.parameters() if p.requires_grad]
+            self.optimizer = optim.SGD(parameters, lr = conf.lr, momentum = conf.momentum, weight_decay = 1e-4)
+            self.lr_schedule = optim.lr_scheduler.MultiStepLR(self.optimizer, milestones = conf.milestones, gamma = 0.1)
+            self.loss_meter = AverageMeter()
+                
     def evaluate_loader(self, conf): 
-        validation_paths_dic = {
-                    "LFW" : os.path.join(conf.evaluate_dataset_root, 'lfw_112'),
-                    "CALFW" : os.path.join(conf.evaluate_dataset_root, 'calfw_112'),
-                    "CPLFW" : os.path.join(conf.evaluate_dataset_root, 'cplfw_112'),
-                    "CFP_FF" : os.path.join(conf.evaluate_dataset_root, 'cfp_112'),
-                    "CFP_FP" : os.path.join(conf.evaluate_dataset_root, 'cfp_112')}
         validation_data_dic = {}
         for val_type in conf.validations:
-            
             self.print_and_log('Init dataset and loader for validation type: {}'.format(val_type))
             print('Init dataset and loader for validation type: {}'.format(val_type))
-            
-            dataset, loader = get_evaluate_dataset_and_loader(root_dir=validation_paths_dic[val_type], 
-                                                                    type=val_type, 
-                                                                    num_workers=conf.num_workers, 
-                                                                    input_size=conf.image_shape, 
-                                                                    batch_size=conf.evaluate_batch_size)
+            dataset, loader = get_val_data(conf.evaluate_dataset_root, val_type)
             validation_data_dic[val_type+'_dataset'] = dataset
             validation_data_dic[val_type+'_loader'] = loader
+        
         return validation_data_dic 
 
     def load_state(self, conf, load_optimizer =False): 
@@ -193,34 +180,23 @@ class FaceTrainer(object):
                 """
                 code evaluate dataset  
                 """
-                print('evaluating model ....')    
+                print('evaluating model in epoch: {}'.format(epoch))  
+                self.print_and_log('evaluating model in epoch: %d' % (epoch))  
                 for val_type in conf.validations:
-                    dataset = self.evaluate_dataset[val_type+'_dataset']
-                    loader = self.evaluate_dataset[val_type+'_loader']
+                    carray = self.evaluate_dataset[val_type+'_dataset']
+                    issame = self.evaluate_dataset[val_type+'_loader']
                     self.model.eval()
                     t = time.time()
                     print('\n\nRunnning forward pass on {} images'.format(val_type))
+                    self.print_and_log('\n\nRunnning forward pass on {} images'.format(val_type))
+                    
+                    accuracy, best_thresholds, roc_curve_tensor =  perform_val(self.model, conf, carray, issame, nrof_folds = 5, tta = True)
 
-                    tpr, fpr, accuracy, val, val_std, far = evaluate_forward_pass(self.model, 
-                                                                                loader, 
-                                                                                dataset, 
-                                                                                conf.feat_dim, 
-                                                                                conf.device,
-                                                                                lfw_nrof_folds=conf.evaluate_nrof_folds, 
-                                                                                distance_metric= conf.distance_metric, 
-                                                                                subtract_mean=conf.evaluate_subtract_mean)
-
-                    self.print_and_log('\nEpoch: '+str(epoch))
-                    self.print_and_log('Accuracy: %2.5f+-%2.5f' % (np.mean(accuracy), np.std(accuracy)))
-                    self.print_and_log('Validation rate: %2.5f+-%2.5f @ FAR=%2.5f' % (val, val_std, far))
-
-                    auc = metrics.auc(fpr, tpr)
-                    self.print_and_log('Area Under Curve (AUC): %1.3f' % auc)
-
-                    time_for_val = int(time.time() - t)
-                    self.print_and_log('Total time for {} evaluation: {}'.format(val_type, timedelta(seconds=time_for_val)))
+                    self.print_and_log('testdataset: %s + accuracy: %2.5f + best threshold: %2.5f + roc curve tensor: %2.5f' % ('agedb_30', accuracy, best_threshold, roc_curve_tensor))
+                
+                    # time_for_val = int(time.time() - t)
+                    # self.print_and_log('Total time for {} evaluation: {}'.format(val_type, timedelta(seconds=time_for_val)))
                     print("\n")
-                        
                     self.writer.add_scalar(val_type +"_accuracy", np.mean(accuracy), epoch)
                             
             # save final every epoch 

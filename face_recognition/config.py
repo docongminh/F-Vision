@@ -4,7 +4,7 @@ import torch
 device = torch.device("cpu")
 data_root = '/home/minglee/Documents/aiProjects/RepoGithub/Dataset/VN-celeb' 
 #help = "The root folder of training set."
-evaluate_dataset_root = '../face_recognition/data'
+evaluate_dataset_root = '/home/minglee/Documents/aiProjects/RepoGithub/F-Vision/face_recognition/data'
 backbone_type =  'ResNet'  
 # ['ir', 'ir_se'], 'mode should be ir or ir_se' ,[50, 100, 152], 'num_layers should be 50,100, or 152'
 # help = "Mobilefacenets, Resnet."  
@@ -12,7 +12,8 @@ loss_type = 'ArcFace'
 # help = "mv-softmax, arcface, npc-face."
 lr = 0.1 
 # help='The initial learning rate.'
-validations = ['LFW', 'CALFW', 'CPLFW', 'CFP_FF', 'CFP_FP']
+validations = ['lfw', 'cfp_ff', 'cfp_fp', 'agedb_30', 'calfw' ,'cplfw', 'vgg2_fp']
+validations = ['agedb_30']
 # name of evaluate dataset
 evaluate_nrof_folds = 5 
 # k folds of evaluate dataset 
