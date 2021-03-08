@@ -24,8 +24,8 @@ and below guideline for linux platform. you can find something else in [original
       `make install`
    - Step 4: get `include header file` & lib `libncnn.a` in folder `install`
 ### use framework built for specify palatform
-    > lib built by Tencent team public in [release list](https://github.com/Tencent/ncnn/releases)
-    > Download lib for your platform same re-build process
+   lib built by Tencent team public in [release list](https://github.com/Tencent/ncnn/releases)
+   Download lib for your platform same re-build process
 ## convert model to ncnn format (file.bin & file.param)
 ### pytorch
   > Overview flow as [ncnn wiki](https://github.com/Tencent/ncnn/wiki/use-ncnn-with-pytorch-or-onnx): `pytorch model` -> `onnx` -> `ncnn`
@@ -44,7 +44,7 @@ and below guideline for linux platform. you can find something else in [original
         # export model
         output = torch.onnx._export(model, input, "onnx_converted.onnx", export_params=True)
   - Step 2: Fix redundant operators
-    > In ncnn wiki mentioned `model may contains many redundant operators such as Shape, Gather, Unsqueeze that us not supported in ncnn
+     In ncnn wiki mentioned `model may contains many redundant operators such as Shape, Gather, Unsqueeze that us not supported in ncnn
     ```
       Shape not supported yet!
       Gather not supported yet!
@@ -55,13 +55,13 @@ and below guideline for linux platform. you can find something else in [original
         # axes 7
     ```
     To solve it. Use handy [tool](https://github.com/daquexian/onnx-simplifier) developed by danquexian
-    `python3 -m onnxsim onnx_converted.onnx onnx_removed.onnx`
+      `python3 -m onnxsim onnx_converted.onnx onnx_removed.onnx`
   - Step 3: Convert onnx to ncnn
-  > [Use tools convert by ncnn](https://github.com/docongminh/F-Vision/tree/master/optimizer_framework/NCNN#use-framework-built-for-specify-patlform) to convert onnx model to ncnn model.
+     [Use tools convert by ncnn](https://github.com/docongminh/F-Vision/tree/master/optimizer_framework/NCNN#use-framework-built-for-specify-patlform) to convert onnx model to ncnn model.
     `./onnx2ncnn onnx_removed.onnx ncnn_model.param ncnn_model.bin`
   
 ### tensorflow
-   > Tools support [ckpt2ncnn](https://github.com/hanzy88/ckpt2ncnn) or [tensorflow2ncnn](https://github.com/hanzy88/tensorflow2ncnn)
+   Tools support [ckpt2ncnn](https://github.com/hanzy88/ckpt2ncnn) or [tensorflow2ncnn](https://github.com/hanzy88/tensorflow2ncnn)
 ### mxnet
-  > ncnn supported convert mxnet to ncnn. Use ncnn tools
-  `./mxnet2ncnn model-symbol.json model-0000.params ncnn_model.bin ncnn_model.param`
+   ncnn supported convert mxnet to ncnn. Use ncnn tools
+      `./mxnet2ncnn model-symbol.json model-0000.params ncnn_model.bin ncnn_model.param`
