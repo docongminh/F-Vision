@@ -28,8 +28,8 @@ and below guideline for linux platform. you can find something else in [original
    Download lib for your platform same re-build process
 ## convert model to ncnn format (file.bin & file.param)
 ### pytorch
-  > Overview flow as [ncnn wiki](https://github.com/Tencent/ncnn/wiki/use-ncnn-with-pytorch-or-onnx): `pytorch model` -> `onnx` -> `ncnn`
-  > Add on more tools support convert model [PytorchConverter](https://github.com/starimeL/PytorchConverter), [brocolli](https://github.com/inisis/brocolli)
+  Overview flow as [ncnn wiki](https://github.com/Tencent/ncnn/wiki/use-ncnn-with-pytorch-or-onnx): `pytorch model` -> `onnx` -> `ncnn`
+  Add on more tools support convert model [PytorchConverter](https://github.com/starimeL/PytorchConverter), [brocolli](https://github.com/inisis/brocolli)
   - Step 1: Convert Pytorch to Onnx
     ```python
         import torch
