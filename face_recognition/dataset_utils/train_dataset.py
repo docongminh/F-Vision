@@ -6,24 +6,9 @@ import numpy as np
 from torch.utils.data import Dataset
 from torchvision.datasets import ImageFolder
 import torchvision.transforms as transforms
-
-def de_preprocess(tensor):
-
-    return tensor * 0.5 + 0.5
-
-hflip = transforms.Compose([
-            de_preprocess,
-            transforms.ToPILImage(),
-            transforms.functional.hflip,
-            transforms.ToTensor(),
-            transforms.Normalize([0.5, 0.5, 0.5], [0.5, 0.5, 0.5])
-        ])
+import logging as logger
 
 
-def normalize_image(image): 
-    image = (image.transpose((2, 0, 1)) - 127.5) * 0.0078125
-    image = torch.from_numpy(image.astype(np.float32))
-    return image
 
 def split_dataset(data_root): 
     train_list = []
@@ -53,48 +38,58 @@ class ImageDataset(Dataset):
         image_path, image_label = self.train_list[index]
         image_path = os.path.join(self.data_root, image_path)
         image = cv2.imread(image_path)
+
         if self.crop_eye:
             image = image[:60, :]
+        
         image = cv2.resize(image, self.image_shape) #128 * 128
+        
         if random.random() > 0.5:
             image = cv2.flip(image, 1)
+        
         if image.ndim == 2:
             image = image[:, :, np.newaxis]
-        norm_img = normalize_image(image)
-        # inital zeros matrix for test
-        # norm_img = torch.Tensor(np.zeros((3,112,112)))
+        # normalize the image
+        image = (image.transpose((2, 0, 1)) - 127.5) * 0.0078125
+        image = torch.from_numpy(image.astype(np.float32))
         
         return norm_img, image_label
    
+class CommonTestDataset(Dataset):
+    """ Data processor for model evaluation.
 
-class NormBatch():
+    Attributes:
+        image_root(str): root directory of test set.
+        image_list_file(str): path of the image list file.
+        crop_eye(bool): crop eye(upper face) as input or not.
     """
-    normalize batch size evaluate dataset 
-    """
-    def normalize_batch(self, tensor_batch): 
-        norm_tensor = torch.empty_like(tensor_batch)
-        print(tensor_batch.shape)
-        for i, img in enumerate(tensor_batch):
-            print('debug')
-            print(img.shape)
-            imm = img.permute(1,2,0)
-            print(imm.shape)
-            norm_img = normalize_image(img)
-            norm_tensor[i] = norm_img
-            
-        return norm_tensor
-    
-    def l2_norm(self, input, axis = 1):
-        norm = torch.norm(input, 2, axis, True)
-        output = torch.div(input, norm)
-
-        return output
-
-    def hflip_batch(self, imgs_tensor):
-        hfliped_imgs = torch.empty_like(imgs_tensor)
-        for i, img_ten in enumerate(imgs_tensor):
-            hfliped_imgs[i] = hflip(img_ten)
-
-        return hfliped_imgs
+    def __init__(self, image_root, image_list_file, crop_eye=False, image_shape = (112,112)):
+        self.image_root = image_root
+        self.image_list = []
+        self.image_shape = image_shape 
+        image_list_buf = open(image_list_file)
+        line = image_list_buf.readline().strip()
+        while line:
+            self.image_list.append(line)
+            line = image_list_buf.readline().strip()
+        self.mean = 127.5
+        self.std = 128.0
+        self.crop_eye = crop_eye
+    def __len__(self):
+        return len(self.image_list)
+    def __getitem__(self, index):
+        short_image_path = self.image_list[index]
+        image_path = os.path.join(self.image_root, short_image_path)
+        image = cv2.imdecode(np.fromfile(image_path, dtype=np.uint8), cv2.IMREAD_UNCHANGED)
+        
+        image = cv2.resize(image, self.image_shape)
+        
+        if self.crop_eye:
+            image = image[:60, :]
+        # normalize the image
+        image = (image.transpose((2, 0, 1)) - self.mean) / self.std
+        image = torch.from_numpy(image.astype(np.float32))
+        
+        return image, short_image_path
 
 

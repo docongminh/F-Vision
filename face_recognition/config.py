@@ -5,7 +5,7 @@ device = torch.device("cpu")
 data_root = '/home/minglee/Documents/aiProjects/RepoGithub/Dataset/VN-celeb' 
 #help = "The root folder of training set."
 evaluate_dataset_root = '/home/minglee/Documents/aiProjects/RepoGithub/F-Vision/face_recognition/data'
-backbone_type =  'ResNet'  
+backbone_type =  'MobileFaceNet'  
 # ['ir', 'ir_se'], 'mode should be ir or ir_se' ,[50, 100, 152], 'num_layers should be 50,100, or 152'
 # help = "Mobilefacenets, Resnet."  
 loss_type = 'ArcFace' 
