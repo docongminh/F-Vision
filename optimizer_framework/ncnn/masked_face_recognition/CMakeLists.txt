@@ -16,7 +16,7 @@ add_library(VisionEngine STATIC ${SRC_FILES})
 
 find_package(OpenCV)
 message("Opencv Version: ${OPENCV_VERSION}" )
-include_directories(${CMAKE_SOURCE_DIR}/ncnn/include)
+include_directories(${CMAKE_SOURCE_DIR}/ncnn/include/ncnn)
 link_directories(${CMAKE_SOURCE_DIR}/ncnn/lib)
 target_link_libraries(VisionEngine PUBLIC ${OpenCV_LIBS} ncnn)
 #
