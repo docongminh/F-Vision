@@ -7,6 +7,7 @@
 import scipy.io as scio
 from abc import ABCMeta, abstractmethod
 
+
 class PairsParser(metaclass=ABCMeta):
     """Parse the pair list for lfw based protocol.
     Because the official pair list for different dataset(lfw, cplfw, calfw ...) is different, 
@@ -31,6 +32,7 @@ class LFW_PairsParser(PairsParser):
     """The pairs parser for lfw.
     """
     def parse_pairs(self):
+        cnt = 0
         test_pair_list = []
         pairs_file_buf = open(self.pairs_file)
         line = pairs_file_buf.readline() # skip first line
@@ -56,6 +58,7 @@ class LFW_PairsParser(PairsParser):
                 raise Exception('Line error: %s.' % line)
             test_pair_list.append((image_name1, image_name2, label))
             line = pairs_file_buf.readline().strip()
+
         return test_pair_list
 
 class CPLFW_PairsParser(PairsParser):
