@@ -9,7 +9,6 @@ import torchvision.transforms as transforms
 import logging as logger
 
 
-
 def split_dataset(data_root): 
     train_list = []
     num_class = len(os.listdir(data_root))
@@ -18,8 +17,9 @@ def split_dataset(data_root):
         for image in os.listdir(fps_class_name):
             image_name = os.path.join(class_name, image) 
             train_list.append((image_name, int(class_name)))
-    print('num_class ', num_class)
-    print('num data point', len(train_list))
+
+    print('number of class train dataset ', num_class)
+    print('number of data point train dataset', len(train_list))
     return train_list, num_class
 
 
@@ -53,7 +53,7 @@ class ImageDataset(Dataset):
         image = (image.transpose((2, 0, 1)) - 127.5) * 0.0078125
         image = torch.from_numpy(image.astype(np.float32))
         
-        return norm_img, image_label
+        return image, image_label
    
 class CommonTestDataset(Dataset):
     """ Data processor for model evaluation.
