@@ -35,8 +35,8 @@ target_include_directories(VisionEngine
     PUBLIC
         $<INSTALL_INTERFACE:include/vision>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/masked_face>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src/recognition>
 )
 #
-add_executable(masked_face ${CMAKE_SOURCE_DIR}/src/masked_face.cpp)
+add_executable(masked_face ${CMAKE_SOURCE_DIR}/src/inference.cpp)
 target_link_libraries(masked_face PUBLIC VisionEngine)
