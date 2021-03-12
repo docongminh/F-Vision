@@ -12,8 +12,9 @@ class ModelLoader:
     Attributes: 
         model(object): the model definition file.
     """
-    def __init__(self, backbone_factory):
+    def __init__(self, backbone_factory,device):
         self.model = backbone_factory.get_backbone()
+        self.device = device 
 
     def load_model_default(self, model_path):
         """The default method to load a model.
@@ -25,8 +26,8 @@ class ModelLoader:
             model(object): initialized model.
         """
         self.model.load_state_dict(torch.load(model_path)['state_dict'], strict=True) 
-        model = torch.nn.DataParallel(self.model).cuda()
-        return model
+        # model = torch.nn.DataParallel(self.model).cuda()
+        return self.model
 
     def load_model(self, model_path):
         """The custom method to load a model.
@@ -38,8 +39,8 @@ class ModelLoader:
             model(object): initialized model.
         """
         model_dict = self.model.state_dict()
-        pretrained_dict = torch.load(model_path)['state_dict']
-        #pretrained_dict = torch.load(model_path) 
+        pretrained_dict = torch.load(model_path,map_location='cpu')['state_dict']
+        #pretrained_dict = torch.load(model_path)   
         new_pretrained_dict = {}
         for k in model_dict:
             new_pretrained_dict[k] = pretrained_dict['backbone.'+k] # tradition training
@@ -49,5 +50,5 @@ class ModelLoader:
             #new_pretrained_dict[k] = pretrained_dict[k] # co-mining
         model_dict.update(new_pretrained_dict)
         self.model.load_state_dict(model_dict)
-        model = torch.nn.DataParallel(self.model).cuda()
-        return model
+        # model = torch.nn.DataParallel(self.model).cuda()
+        return self.model
