@@ -7,6 +7,7 @@ import argparse
 import logging as logger
 from tqdm import tqdm 
 from sklearn import metrics
+import yaml
 
 from torch import optim
 from torch.utils.data import DataLoader
@@ -14,22 +15,27 @@ from tensorboardX import SummaryWriter
 
 sys.path.append('../../')
 from utils.AverageMeter import AverageMeter
-from dataset_utils.train_dataset import ImageDataset
-from dataset_utils.evaluate_dataset import get_val_data
-from dataset_utils.evaluate_helpers import perform_val
 from backbone.backbone_def import BackboneFactory
 from losses.loss_def import LossFactory
 from datetime import datetime, timedelta
+
+from prettytable import PrettyTable
+from dataset_utils.data_evaluator import Evaluator
+from dataset_utils.extractor_embedding import CommonExtractor 
+from dataset_utils.pairs_parser import PairsParserFactory
+from dataset_utils.train_dataset import ImageDataset, CommonTestDataset
+
+from utils.model_loader import ModelLoader 
+
 import time
 import config 
 import warnings
+
 warnings.filterwarnings("ignore", category=UserWarning)
 
-# logger.basicConfig(level=logger.INFO, 
-#                    format='%(levelname)s %(asctime)s %(filename)s: %(lineno)d] %(message)s',
-#                    datefmt='%Y-%m-%d %H:%M:%S')
-
-
+logger.basicConfig(level=logger.INFO, 
+                   format='%(levelname)s %(asctime)s %(filename)s: %(lineno)d] %(message)s',
+                   datefmt='%Y-%m-%d %H:%M:%S')
 class FaceModel(torch.nn.Module):
     """Define a traditional face model which contains a backbone and a head.
     
@@ -48,25 +54,31 @@ class FaceModel(torch.nn.Module):
         self.backbone = backbone_factory.get_backbone()
         self.loss = loss_factory.get_loss()
 
-    def forward(self, data, label):
+    def forward(self, data, label, status='train'):
         feat = self.backbone.forward(data)
+        
+        if status == 'eval': 
+            return feat
+
         pred = self.loss.forward(feat, label)
         return pred
-    def feed_emb(self, data): 
-        return self.backbone.forward(data) 
     
 class FaceTrainer(object): 
     def __init__(self, conf, inference=False):
+        if not os.path.exists(conf.log_dir): 
+            os.makedirs(conf.log_dir)
+        self.log_file_path = os.path.join(conf.log_dir, 'history_training_log.txt')
         # Load backbone 
-        backbone_factory = BackboneFactory(conf.backbone_type, conf)    
+        backbone_factory = BackboneFactory(conf.backbone_type, conf.model_parameter[conf.backbone_type])    
         # Load losses
-        loss_factory = LossFactory(conf.loss_type, conf)
+        loss_factory = LossFactory(conf.loss_type, conf.loss_parameter[conf.loss_type])
         # Load models
         self.model = FaceModel(backbone_factory, loss_factory)
-        print('Generated models {} deep layer {} type loss {} done !. \n'
-              .format(conf.backbone_type,conf.model_parameter[conf.backbone_type]['depth'] ,conf.loss_type))
-        if conf.device.type != "cpu":    
-            self.model = torch.nn.DataParallel(self.model).cuda()
+
+        print(' Load backbone', conf.model_parameter[conf.backbone_type])
+        print(' Load loss model', conf.loss_parameter[conf.loss_type])
+        self.print_and_log(' Load backbone {}'.format(conf.model_parameter[conf.backbone_type]))
+        self.print_and_log(' Load loss model {}'.format(conf.loss_parameter[conf.loss_type]))
         
         if not inference: 
             self.step_loop = 0 
@@ -80,50 +92,55 @@ class FaceTrainer(object):
             print('path of tensorboard: ', tensorboardx_logdir)
             self.writer = SummaryWriter(log_dir=tensorboardx_logdir)    
             # init history of train models 
-            self.log_file_path = os.path.join(conf.log_dir, 'history_training_log.txt')
             # Load data
             dataset = ImageDataset(conf.data_root, conf.image_shape)
             self.num_class = conf.num_class = dataset.__num_class__()
             self.data_loader = DataLoader(dataset, conf.batch_size, True, num_workers = 4, drop_last= True)
             # Define criterion loss 
             self.criterion = torch.nn.CrossEntropyLoss().to(conf.device)
-            # load evaluate dataset 
-            self.evaluate_dataset =  self.evaluate_loader(conf)
+
             # init optimizer lr_schedule and loss_meter     
             parameters = [p for p in self.model.parameters() if p.requires_grad]
             self.optimizer = optim.SGD(parameters, lr = conf.lr, momentum = conf.momentum, weight_decay = 1e-4)
             self.lr_schedule = optim.lr_scheduler.MultiStepLR(self.optimizer, milestones = conf.milestones, gamma = 0.1)
             self.loss_meter = AverageMeter()
                 
-    def evaluate_loader(self, conf): 
-        validation_data_dic = {}
-        for val_type in conf.validations:
-            self.print_and_log('Init dataset and loader for validation type: {}'.format(val_type))
-            print('Init dataset and loader for validation type: {}'.format(val_type))
-            dataset, loader = get_val_data(conf.evaluate_dataset_root, val_type)
-            validation_data_dic[val_type+'_dataset'] = dataset
-            validation_data_dic[val_type+'_loader'] = loader
-        
-        return validation_data_dic 
+    def evaluate_loader(self, conf, model): 
+        information_list = []
+        feature_extractor = CommonExtractor(conf.device)
+
+        with open(conf.dataset_paths) as f:
+            dataset_paths = yaml.load(f)
+
+        for data_type in conf.dataset_type: 
+            t = time.time()
+            pairs_file =            dataset_paths[data_type]['pairs_file_path']
+            cropped_foler_img =     dataset_paths[data_type]['cropped_face_folder']
+            image_list_label_path = dataset_paths[data_type]['image_list_file_path'] 
+            
+            pairs_parser_factory = PairsParserFactory(pairs_file, data_type)
+            data_loader = DataLoader(CommonTestDataset(cropped_foler_img, image_list_label_path, False),
+                            batch_size=conf.batch_size, num_workers = conf.num_workers, shuffle=False)
+            feature_extractor = CommonExtractor(conf.device)
+            evaluator_dataset = Evaluator(data_loader, pairs_parser_factory, feature_extractor) 
+            mean_acc, mean_tpr, mean_fpr ,std = evaluator_dataset.eval(model)
+
+            information_list.append((mean_acc, mean_tpr, mean_fpr, std, time.time()-t, data_type))
+            print('\neval dataset {} done !\n'.format(data_type))
+        return  information_list
 
     def load_state(self, conf, load_optimizer =False): 
-        if os.path.exists(conf.pretrain_model_path): 
-            state_dict = torch.load(conf.pretrain_model_path, map_location = conf.device )
-            self.model.load_state_dict(state_dict['state_dict'])
-            if load_optimizer: 
-                self.optimizer.load_state_dict(state_dict['optimizer_state_dict'])
-            print('load model epoch {} and batch_id {} and load optimizer {} \n'.format(state_dict['epoch'], state_dict['batch_id'],load_optimizer))
-        else: 
-            print('pretrained model path not exist !')
-
-    def save_state(self, saved_name, epoch, batch_id, conf): 
-        state = {
-            'state_dict': self.model.state_dict(),
-            'optimizer_state_dict': self.optimizer.state_dict(),
-            'epoch': epoch,
-            'batch_id': batch_id
-        }
-        torch.save(state, os.path.join(conf.out_dir, saved_name))
+        status_model_load = torch.load(conf.pretrain_model, map_location=conf.device)
+        state_dict = status_model_load['state_dict']
+        state_dict['loss.weight'] = state_dict['head.weight']
+        del state_dict['head.weight']
+        self.model.load_state_dict(state_dict)
+        if conf.device.type != 'cpu': 
+            self.model = torch.nn.DataParallel(self.model).cuda()
+        print('load pretrained done! ')
+        self.print_and_log('load pretrained model path:{}'.format(conf.pretrain_model))
+        self.print_and_log('epoch:{} batch_idx {}'.format(status_model_load['epoch'], status_model_load['batch_id']))
+        self.print_and_log('load pretrained done! ')
 
     def get_lr(self):
         """Get the current learning rate from optimizer. 
@@ -140,22 +157,29 @@ class FaceTrainer(object):
     def train(self, conf):
         """Total training procedure.
         """
-        
+        if conf.reload_model:
+            self.load_state(conf)
+
         self.model.train()
+        self.print_and_log('started training process .........')
         for epoch in range(conf.epoches):
+            
             batch_idx = 0 
             print('\n')
-            for (images, labels) in tqdm(self.data_loader, desc='epoch {} started'.format(epoch)):
-            # for (images, labels) in self.data_loader:
+            self.print_and_log('started epoch:%d\n'%(epoch))
+            for (images, labels) in tqdm(self.data_loader, desc='started epoch: {}'.format(epoch)):
+                
                 images = images.to(conf.device)
                 labels = labels.to(conf.device)
                 labels = labels.squeeze()
-                outputs = self.model.forward(images, labels)
-                loss = self.criterion(outputs, labels)
+                pred = self.model.forward(images, labels)
+                loss = self.criterion(pred, labels)
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
                 self.loss_meter.update(loss.item(), images.shape[0])
+
+                # save log parametor
                 if batch_idx % conf.print_freq == 0:
                     loss_avg = self.loss_meter.avg
                     lr = self.get_lr()
@@ -169,47 +193,43 @@ class FaceTrainer(object):
                     log = 'Train_lr %f step %d'%(lr, self.step_loop)
                     self.print_and_log(log)
                     self.loss_meter.reset()
-                    
+                # test model 
+                if (batch_idx + 1) % conf.eval_by_batch_idx == 0 and batch_idx !=0: 
+                    print('evaluating model in epoch: {} batch_id {}'.format(epoch,batch_idx))  
+                    self.print_and_log('evaluating model in epoch: {} batch_id {}'.format(epoch,batch_idx))  
+
+                    info_eval = self.evaluate_loader(conf, self.model)
+                    pretty_tabel = PrettyTable(["mean accuracy","mean tpr","mean fpr" , "standard error", "time processing", "dataset type"])
+                    for row in info_eval:
+                        pretty_tabel.add_row(row)
+                    print(pretty_tabel)
+                    self.print_and_log("\n\nevaluate model in epoch_{}_batch_idx_{} dataset: {}\n\n".format(epoch,batch_idx, conf.dataset_type))
+                    self.print_and_log(pretty_tabel.get_string())
+                # save batch_idx model
                 if (batch_idx + 1) % conf.save_freq == 0:
                     saved_name = 'Epoch_%d_batch_%d.pt' % (epoch, batch_idx)
-                    self.save_state(saved_name, epoch, batch_idx, conf)
+                    state = { 'state_dict': self.model.state_dict(),
+                                'epoch': epoch,
+                                'batch_id': batch_idx}
+                    torch.save(state, os.path.join(conf.out_dir, saved_name))
                 batch_idx +=1
-                self.step_loop +=1
-            print('epoch {}'.format(epoch))    
-            if epoch % conf.evaluate_every_epoch == 0: 
-                """
-                code evaluate dataset  
-                """
-                print('evaluating model in epoch: {}'.format(epoch))  
-                self.print_and_log('evaluating model in epoch: %d' % (epoch))  
-                for val_type in conf.validations:
-                    carray = self.evaluate_dataset[val_type+'_dataset']
-                    issame = self.evaluate_dataset[val_type+'_loader']
-                    self.model.eval()
-                    t = time.time()
-                    print('\n\nRunnning forward pass on {} images'.format(val_type))
-                    self.print_and_log('\n\nRunnning forward pass on {} images'.format(val_type))
-                    
-                    accuracy, best_thresholds, roc_curve_tensor =  perform_val(self.model, conf, carray, issame, nrof_folds = 5, tta = True)
+            
+            self.step_loop +=1
 
-                    self.print_and_log('testdataset: %s + accuracy: %2.5f + best threshold: %2.5f + roc curve tensor: %2.5f' % ('agedb_30', accuracy, best_threshold, roc_curve_tensor))
-                
-                    # time_for_val = int(time.time() - t)
-                    # self.print_and_log('Total time for {} evaluation: {}'.format(val_type, timedelta(seconds=time_for_val)))
-                    print("\n")
-                    self.writer.add_scalar(val_type +"_accuracy", np.mean(accuracy), epoch)
-                            
-            # save final every epoch 
-            saved_name = 'Final_epoch_%d.pt' % epoch
-            self.save_state(saved_name, epoch, 0 , conf)
+            # save model by end of single epoch
+            saved_name = 'Epoch_%d.pt' % epoch
+            state = {'state_dict': self.model.state_dict(), 
+                        'epoch': epoch, 
+                        'batch_id': batch_idx}
+
+            torch.save(state, os.path.join(conf.out_dir, saved_name))
+            self.print_and_log('save model name{}'.format(saved_name))
             self.lr_schedule.step()
+        self.print_and_log('end training process .........')
         self.writer.close()                        
 
-
+     
 if __name__ == '__main__':
     config.milestones = [int(num) for num in config.step.split(',')]
-    logger.info('Start optimization.')
-    logger.info(config)
     learner = FaceTrainer(config)
     learner.train(config)
-    logger.info('Optimization done!')
