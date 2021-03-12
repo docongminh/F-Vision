@@ -8,6 +8,7 @@ import os
 import logging as logger
 import numpy as np
 import torch
+from tqdm import tqdm 
 logger.basicConfig(level=logger.INFO, 
                    format='%(levelname)s %(asctime)s %(filename)s: %(lineno)d] %(message)s',
                    datefmt='%Y-%m-%d %H:%M:%S')
@@ -34,35 +35,35 @@ class CommonExtractor:
         model.eval()
         image_name2feature = {}
         with torch.no_grad(): 
-            for batch_idx, (images, filenames) in enumerate(data_loader):
+            for (images, filenames) in tqdm(data_loader):
                 images = images.to(self.device)
-                features = model(images).cpu().numpy()
+                features= model.forward(images, None,'eval').cpu().numpy()
                 for filename, feature in zip(filenames, features): 
                     image_name2feature[filename] = feature
         return image_name2feature
 
-    def extract_offline(self, feats_root, model, data_loader):
-        """Extract and save features.
+    # def extract_offline(self, feats_root, model, data_loader):
+    #     """Extract and save features.
 
-        Args:
-            feats_root(str): the path to save features.
-            model(object): initialized model.
-            data_loader(object): load data to be extracted.
-        """
-        model.eval()
-        with torch.no_grad():
-            for batch_idx, (images, filenames) in enumerate(data_loader):
-                images = images.to(self.device)
-                features = model(images).cpu().numpy()
-                for filename, feature in zip(filenames, features):
-                    feature_name = os.path.splitext(filename)[0]
-                    feature_path = os.path.join(feats_root, feature_name + '.npy')
-                    feature_dir = os.path.dirname(feature_path)
-                    if not os.path.exists(feature_dir):
-                        os.makedirs(feature_dir)
-                    np.save(feature_path, feature)
-                if (batch_idx + 1) % 10 == 0:
-                    logger.info('Finished batches: %d/%d.' % (batch_idx+1, len(data_loader)))
+    #     Args:
+    #         feats_root(str): the path to save features.
+    #         model(object): initialized model.
+    #         data_loader(object): load data to be extracted.
+    #     """
+    #     model.eval()
+    #     with torch.no_grad():
+    #         for batch_idx, (images, filenames) in enumerate(data_loader):
+    #             images = images.to(self.device)
+    #             features = model(images).cpu().numpy()
+    #             for filename, feature in zip(filenames, features):
+    #                 feature_name = os.path.splitext(filename)[0]
+    #                 feature_path = os.path.join(feats_root, feature_name + '.npy')
+    #                 feature_dir = os.path.dirname(feature_path)
+    #                 if not os.path.exists(feature_dir):
+    #                     os.makedirs(feature_dir)
+    #                 np.save(feature_path, feature)
+    #             if (batch_idx + 1) % 10 == 0:
+    #                 logger.info('Finished batches: %d/%d.' % (batch_idx+1, len(data_loader)))
 
 class FeatureHandler:
     """Some method to deal with features.
