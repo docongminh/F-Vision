@@ -30,10 +30,10 @@ class Evaluator(object):
         self.pair_list = pairs_parser.parse_pairs()
         self.feature_extractor = feature_extractor
 
-    def test(self, model):
+    def eval(self, model):
         image_name2feature = self.feature_extractor.extract_online(model, self.data_loader)
-        mean, std = self.test_one_model(self.pair_list, image_name2feature)
-        return mean, std
+        mean_acc, mean_tpr, mean_fpr ,std = self.test_one_model(self.pair_list, image_name2feature)
+        return mean_acc, mean_tpr, mean_fpr ,std
 
     def test_one_model(self, test_pair_list, image_name2feature, is_normalize = True):
         """Get the accuracy of a model.
@@ -66,6 +66,8 @@ class Evaluator(object):
 
         subset_train = np.array([True] * 10)
         accu_list = []
+        tpr_list = [] 
+        fpr_list = []
         for subset_idx in range(10):
             test_score_list = subsets_score_list[subset_idx]
             test_label_list = subsets_label_list[subset_idx]
@@ -74,14 +76,30 @@ class Evaluator(object):
             train_label_list = subsets_label_list[subset_train].flatten()
             subset_train[subset_idx] = True
             best_thres = self.getThreshold(train_score_list, train_label_list)
+
             positive_score_list = test_score_list[test_label_list == 1]
             negtive_score_list = test_score_list[test_label_list == 0]
+
             true_pos_pairs = np.sum(positive_score_list > best_thres)
             true_neg_pairs = np.sum(negtive_score_list < best_thres)
+            false_neg_pairs = np.sum(positive_score_list < best_thres) 
+            false_pos_pairs = np.sum(test_score_list > best_thres)  
+            
+            # tpr = true_pos_pairs/(true_pos_pairs + false_neg_pairs) 
+            # tnr = true_neg_pairs/(false_pos_pairs + true_neg_pairs)
+            # fnr = false_neg_pairs/(true_pos_pairs + false_neg_pairs) 
+            # fpr = false_pos_pairs/(false_pos_pairs + true_neg_pairs)
+
+            tpr_list.append( true_pos_pairs/(true_pos_pairs + false_neg_pairs) )
+            fpr_list.append(false_pos_pairs/(false_pos_pairs + true_neg_pairs))
             accu_list.append((true_pos_pairs + true_neg_pairs) / 600)
-        mean = np.mean(accu_list)
+
+        mean_acc = np.mean(accu_list)
+        mean_tpr = np.mean(tpr_list)
+        mean_fpr = np.mean(fpr_list)
         std = np.std(accu_list, ddof=1) / np.sqrt(10) #ddof=1, division 9.
-        return mean, std
+        
+        return mean_acc, mean_tpr, mean_fpr ,std
 
     def getThreshold(self, score_list, label_list, num_thresholds=1000):
         """Get the best threshold by train_score_list and train_label_list.
