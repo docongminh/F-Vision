@@ -120,7 +120,7 @@ class FaceTrainer(object):
             
             pairs_parser_factory = PairsParserFactory(pairs_file, data_type)
             data_loader = DataLoader(CommonTestDataset(cropped_foler_img, image_list_label_path, False),
-                            batch_size=conf.batch_size, num_workers = conf.num_workers, shuffle=False)
+                            batch_size=conf.evaluate_batch_size, num_workers = conf.num_workers, shuffle=False)
             feature_extractor = CommonExtractor(conf.device)
             evaluator_dataset = Evaluator(data_loader, pairs_parser_factory, feature_extractor) 
             mean_acc, mean_tpr, mean_fpr ,std = evaluator_dataset.eval(model)
