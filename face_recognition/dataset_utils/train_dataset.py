@@ -34,6 +34,7 @@ class ImageDataset(Dataset):
         return len(self.train_list)
     def __num_class__(self): 
         return self.num_class
+
     def __getitem__(self, index):
         image_path, image_label = self.train_list[index]
         image_path = os.path.join(self.data_root, image_path)
