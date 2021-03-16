@@ -8,3 +8,5 @@ test_load_model.py
 test_lfw_dataset.py
 gen_list_img.py
 test_load_model.py
+build_vn_celeb.py
+file_text_vn_celeb
