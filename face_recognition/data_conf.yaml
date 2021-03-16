@@ -12,6 +12,15 @@ CALFW:
     pairs_file_path: /home/duydm/Documents/F-Vision/face_recognition/trash/data_evaluate/CALFW/pairs_CALFW.txt
     cropped_face_folder: /home/duydm/Documents/F-Vision/face_recognition/trash/data_evaluate/CALFW/calfw_crop
     image_list_file_path: /home/duydm/Documents/F-Vision/face_recognition/trash/data_evaluate/CALFW/img_list_calfw.txt
+CFP_FF: 
+    pairs_file_path: ''
+    cropped_face_folder: '' 
+    image_list_file_path: ''
+CFP_FP: 
+    pairs_file_path: ''
+    cropped_face_folder: '' 
+    image_list_file_path: ''
+
 
 # AgeDB30:
 #     pairs_file_path: /export2/wangjun492/face_database/facex-zoo/private_file/test_data/agedb/AgeDB_FINAL_protocol/04_FINAL_protocol_30_years.mat
