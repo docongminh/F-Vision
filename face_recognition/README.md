@@ -19,7 +19,7 @@ You can download dataset in [Training dataset](https://github.com/deepinsight/in
 
 ## step 1. Training data 
 
-Use dataset by stucture path to sub folder. Provide the face images your want to training the dataset/sub_foler/image. In [config.py](../F-Vision/face_recognition/config.py) 
+Use dataset by stucture path to sub folder. Provide the face images your want to training the dataset/sub_foler/image. In [config.py](../face_recognition/config.py) 
 
 And guarantee it have a structure like following:
 ```
@@ -44,7 +44,7 @@ data_root = '../MS-Celeb-ms1m'
 #help = "The root folder of training set."
 ``` 
 ## step 2.Configure the backbone 
-Edit the configuration in [config.py](../F-Vision/face_recognition/config.py). More detailed description about the configuration can be found in [backbone_def.py](../F-Vision/face_recognition/backbone/backbone_def.py).   You can be found like this:  
+Edit the configuration in [config.py](../face_recognition/config.py). More detailed description about the configuration can be found in [backbone_def.py](../face_recognition/backbone/backbone_def.py).   You can be found like this:  
 
 ```
 model_parameter = {'ResNet': 
@@ -63,7 +63,7 @@ model_parameter = {'ResNet':
 
 ```
 ## step 3.Configure the loss model 
-Edit the configure the loss in [config.py](../F-Vision/face_recognition/config.py). More detailed description about the configuration can be found in [losses_def.py](../F-Vision/face_recognition/losses/loss_def.py).   You can be found like this: 
+Edit the configure the loss in [config.py](../face_recognition/config.py). More detailed description about the configuration can be found in [losses_def.py](../face_recognition/losses/loss_def.py).   You can be found like this: 
 
 ```
 loss_parameter = {'ArcFace':
@@ -90,7 +90,7 @@ The structure of foler following like this:
         ---> CPLFW
         ---> LFW 
 ```
-And in [config.py](../F-Vision/face_recognition/config.py). You follow path to folder data_eval like this: 
+And in [config.py](../face_recognition/config.py). You follow path to folder data_eval like this: 
 ```
 dataset_paths = '/home/duydm/Documents/F-Vision/face_recognition/data_conf.yaml'
 ```
@@ -134,7 +134,7 @@ You can download pretrain model for continue training.
 | [Resnet152-irse](https://arxiv.org/abs/1709.01507)  | 99.85 | 89.72 | 95.56 | 98.13 | 97.48 | 71.14M | 12.33G | [Google](https://drive.google.com/drive/folders/1FzXobevacaQ-Y1NAhMjTKZCP3gu4I3ni?usp=sharing),[Baidu](https://pan.baidu.com/s/10Fhgn9fjjtqPLXgrYTaPlA):2d0c |
 
 ## step 6. 
-You can modify [config.py](../F-Vision/face_recognition/config.py) for workplace of model. Load pretrained, history training, and log in tensorboard. 
+You can modify [config.py](../face_recognition/config.py) for workplace of model. Load pretrained, history training, and log in tensorboard. 
 
 ```
 # ______________________ work place output model _____________________________
@@ -151,4 +151,4 @@ add this command line.
 python3 face_recognition/train.py
 ```
 After runing this crip: the output model of evaluate like bellow: 
-![output evaluate](https://github.com/docongminh/F-Vision/blob/master/face_recognition/resources/pretty_table.png)
+![output evaluate](../face_recognition/resources/pretty_table.png)
