@@ -18,7 +18,7 @@ F-Vision project: Face Recognition, Masked Face Detection, Masked Face Recogniti
 # Optimize model: Weight pruning, Quantization
   - Build Weight pruning & evaluate process pruning weights
   - Build quantization & evaluate process quantize models
-# Optimizer Framework: NCNN, MNN, MACE
+# Optimizer Framework: NCNN, MNN, MACE, Tengine
   - Face Detection
     - NCNN
       - convert
