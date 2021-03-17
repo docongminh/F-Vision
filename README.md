@@ -56,3 +56,12 @@ F-Vision project: Face Recognition, Masked Face Detection, Masked Face Recogniti
     - model Size
     - performance
     - accuracy
+# TODO TEST
+  - https://github.com/YonghaoHe/LFFD-A-Light-and-Fast-Face-Detector-for-Edge-Devices
+  - https://github.com/OAID/Tengine
+  - https://github.com/SyGoing/LFFD-MNN
+  - https://github.com/SyGoing/LFFD-with-ncnn
+  - https://github.com/YonghaoHe/LFD-A-Light-and-Fast-Detector
+  - https://github.com/Star-Clouds/CenterFace
+  - https://github.com/jackweiwang/Android-FaceDetection-UltraNet-MNN
+  - https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB
