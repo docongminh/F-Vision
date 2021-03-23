@@ -67,3 +67,4 @@ F-Vision project: Face Recognition, Masked Face Detection, Masked Face Recogniti
   - https://github.com/Linzaer/Ultra-Light-Fast-Generic-Face-Detector-1MB
   - https://github.com/Tencent/FaceDetection-DSFD
   - https://github.com/lijiannuist/lightDSFD
+  - https://github.com/OAID/Tengine-Convert-Tools
