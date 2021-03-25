@@ -1,25 +1,26 @@
 LFW:
-    pairs_file_path: /home/duydm/Documents/F-Vision/face_recognition/trash/data_evaluate/LFW/pairs_LFW.txt
-    cropped_face_folder: /home/duydm/Documents/F-Vision/face_recognition/trash/data_evaluate/LFW/lfw_crop
-    image_list_file_path: /home/duydm/Documents/F-Vision/face_recognition/trash/data_evaluate/LFW/img_list_lfw.txt
+    pairs_file_path: /home/duydm/Documents/dataset/data_evaluate/LFW/pairs_LFW.txt
+    cropped_face_folder: /home/duydm/Documents/dataset/data_evaluate/LFW/lfw_crop
+    image_list_file_path: /home/duydm/Documents/dataset/data_evaluate/LFW/img_list_lfw.txt
 
 CPLFW:
-    pairs_file_path: /home/duydm/Documents/F-Vision/face_recognition/trash/data_evaluate/CPLFW/pairs_CPLFW.txt
-    cropped_face_folder: /home/duydm/Documents/F-Vision/face_recognition/trash/data_evaluate/CPLFW/cplfw_crop
-    image_list_file_path: /home/duydm/Documents/F-Vision/face_recognition/trash/data_evaluate/CPLFW/img_list_cplfw.txt
+    pairs_file_path: /home/duydm/Documents/dataset/data_evaluate/CPLFW/pairs_CPLFW.txt
+    cropped_face_folder: /home/duydm/Documents/dataset/data_evaluate/CPLFW/cplfw_crop
+    image_list_file_path: /home/duydm/Documents/dataset/data_evaluate/CPLFW/img_list_cplfw.txt
 
 CALFW:
-    pairs_file_path: /home/duydm/Documents/F-Vision/face_recognition/trash/data_evaluate/CALFW/pairs_CALFW.txt
-    cropped_face_folder: /home/duydm/Documents/F-Vision/face_recognition/trash/data_evaluate/CALFW/calfw_crop
-    image_list_file_path: /home/duydm/Documents/F-Vision/face_recognition/trash/data_evaluate/CALFW/img_list_calfw.txt
-CFP_FF: 
-    pairs_file_path: ''
-    cropped_face_folder: '' 
-    image_list_file_path: ''
-CFP_FP: 
-    pairs_file_path: ''
-    cropped_face_folder: '' 
-    image_list_file_path: ''
+    pairs_file_path: /home/duydm/Documents/dataset/data_evaluate/CALFW/pairs_CALFW.txt
+    cropped_face_folder: /home/duydm/Documents/dataset/data_evaluate/CALFW/calfw_crop
+    image_list_file_path: /home/duydm/Documents/dataset/data_evaluate/CALFW/img_list_calfw.txt
+
+# CFP_FF: 
+#     pairs_file_path: '/home/duydm/Documents/dataset/data_evaluatec/cfp_112'
+#     cropped_face_folder: '/home/duydm/Documents/dataset/data_facerec/cfp_112/images' 
+#     image_list_file_path: ''
+# CFP_FP: 
+#     pairs_file_path: '/home/duydm/Documents/dataset/data_facerec/cfp_112'
+#     cropped_face_folder: '/home/duydm/Documents/dataset/data_facerec/cfp_112' 
+#     image_list_file_path: ''
 
 
 # AgeDB30:

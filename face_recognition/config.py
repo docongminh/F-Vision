@@ -34,8 +34,8 @@ momentum = 0.9  # help = 'The momentum for sgd.'
 # ___________________ evaluate dataset _______________________
 
 evaluate_batch_size = 4  # batch size of evaluate 
-dataset_type = ['LFW','CALFW' ,'CPLFW'] # name of evaluate dataset
- 
+dataset_type = ['LFW','CALFW' ,'CPLFW', 'CFP_FP', 'CFP_FF'] # name of evaluate dataset
+# dataset_type = ['CFP_FP', 'CFP_FF'] 
 
 # ______________________ work place output model _____________________________
 
