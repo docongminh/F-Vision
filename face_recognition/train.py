@@ -20,7 +20,7 @@ from losses.loss_def import LossFactory
 from datetime import datetime, timedelta
 
 from prettytable import PrettyTable
-from dataset_utils.data_evaluator import Evaluator
+from dataset_utils.evaluator_dataset import Evaluator
 from dataset_utils.extractor_embedding import CommonExtractor 
 from dataset_utils.pairs_parser import PairsParserFactory
 from dataset_utils.train_dataset import ImageDataset, CommonTestDataset
@@ -59,7 +59,6 @@ class FaceModel(torch.nn.Module):
         
         if status == 'eval': 
             return feat
-
         pred = self.loss.forward(feat, label)
         return pred
     
@@ -109,10 +108,12 @@ class FaceTrainer(object):
         information_list = []
         feature_extractor = CommonExtractor(conf.device)
 
+        
         with open(conf.dataset_paths) as f:
             dataset_paths = yaml.load(f)
 
         for data_type in conf.dataset_type: 
+            print('\nload dataset {} done !\n'.format(data_type))
             t = time.time()
             pairs_file =            dataset_paths[data_type]['pairs_file_path']
             cropped_foler_img =     dataset_paths[data_type]['cropped_face_folder']
