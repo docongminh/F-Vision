@@ -3,7 +3,7 @@
 @date: 20201015
 @contact: jun21wangustc@gmail.com
 """ 
-
+import os 
 import scipy.io as scio
 from abc import ABCMeta, abstractmethod
 
@@ -141,6 +141,101 @@ class AgeDB_PairsParser(PairsParser):
                 test_pair_list.append((cur_first_name, cur_second_name, cur_label))
         return test_pair_list
 
+# class CFP_FF_PairsParser(PairsParser): 
+#     """ The pairs parser for CFP FF. 
+#     """
+#     def parse_dif_same_file(self, filepath):
+#         pairs_arr = []
+#         with open(filepath, 'r') as f:
+#             for line in f.readlines()[0:]:
+#                 pair = line.strip().split(',')
+#                 pairs_arr.append(pair)
+#         return pairs_arr  
+
+#     def parse_pairs(self):
+
+#         pairs_list_F = self.pairs_file + '/Pair_list_F.txt'
+
+#         path_hash_F = {}
+#         with open(pairs_list_F, 'r') as f:
+#             for line in f.readlines()[0:]:
+#                 pair = line.strip().split()
+#                 path_hash_F[pair[0]] = self.pairs_file + '/' + pair[1]
+
+  
+#         test_pair_list = []
+#         root_FF = self.pairs_file + '/Split/FF'
+
+
+#         for subdir, _, files in os.walk(root_FF):
+#             for file in files:
+#                 filepath = os.path.join(subdir, file)
+
+#                 pairs_arr = self.parse_dif_same_file(filepath)
+#                 for pair in pairs_arr:
+                
+#                     first = path_hash_F[pair[0]]
+
+#                     second = path_hash_F[pair[1]]
+
+                
+#                     if file == 'diff.txt':
+#                         label = 0
+#                     else:
+#                         label = 1 
+#                     test_pair_list.append((first, second, label))
+                    
+#         return test_pair_list
+
+# class CFP_FP_PairsParser(PairsParser): 
+#     """The pairs parser for CFP FP 
+#     """
+#     def parse_dif_same_file(self, filepath):
+#         pairs_arr = []
+#         with open(filepath, 'r') as f:
+#             for line in f.readlines()[0:]:
+#                 pair = line.strip().split(',')
+#                 pairs_arr.append(pair)
+#         return pairs_arr  
+
+#     def parse_pairs(self): 
+#         pairs_list_F = self.pairs_file + '/Pair_list_F.txt'
+#         pairs_list_P = self.pairs_file + '/Pair_list_P.txt'
+        
+#         path_hash_F = {}
+#         with open(pairs_list_F, 'r') as f:
+#             for line in f.readlines()[0:]:
+#                 pair = line.strip().split()
+#                 path_hash_F[pair[0]] = self.pairs_file + '/' + pair[1]
+
+#         path_hash_P = {}
+#         with open(pairs_list_P, 'r') as f:
+#             for line in f.readlines()[0:]:
+#                 pair = line.strip().split()
+#                 path_hash_P[pair[0]] = self.pairs_file + '/' + pair[1]
+
+#         test_pair_list = []
+#         root_FP = self.pairs_file + '/Split/FP'
+
+#         for subdir, _, files in os.walk(root_FP):
+#             for file in files:
+#                 filepath = os.path.join(subdir, file)
+
+#                 pairs_arr = self.parse_dif_same_file(filepath)
+#                 for pair in pairs_arr:
+                
+#                     first = path_hash_F[pair[0]]
+
+#                     second = path_hash_P[pair[1]]
+
+
+#                     if file == 'diff.txt':
+#                         label = 0
+#                     else:
+#                         label = 1
+#                     test_pair_list.append((first, second, label))
+
+#         return test_pair_list
 
 class PairsParserFactory(object):
     """The factory used to produce different pairs parser for different dataset.
@@ -161,6 +256,10 @@ class PairsParserFactory(object):
             pairs_parser = CALFW_PairsParser(self.pairs_file)
         elif self.test_set == 'AgeDB30':
             pairs_parser = AgeDB_PairsParser(self.pairs_file)
+        # elif self.test_set == 'CFP_FF':
+        #     pairs_parser = CFP_FF_PairsParser(self.pairs_file)
+        # elif self.test_set == 'CFP_FP':
+        #     pairs_parser = CFP_FP_PairsParser(self.pairs_file)
         else:
             pairs_parser = None
         return pairs_parser
