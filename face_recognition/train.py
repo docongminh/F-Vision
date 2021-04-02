@@ -54,12 +54,11 @@ class FaceModel(torch.nn.Module):
         self.backbone = backbone_factory.get_backbone()
         self.loss = loss_factory.get_loss()
 
-    def forward(self, data, label, status='train'):
-        feat = self.backbone.forward(data)
+    def forward(self, data, label):
         
-        if status == 'eval': 
-            return feat
+        feat = self.backbone.forward(data)
         pred = self.loss.forward(feat, label)
+
         return pred
     
 class FaceTrainer(object): 
