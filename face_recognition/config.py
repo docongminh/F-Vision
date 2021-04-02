@@ -32,7 +32,7 @@ momentum = 0.9  # help = 'The momentum for sgd.'
 
 # ___________________ evaluate dataset _______________________
 evaluate_batch_size = 8
-num_of_pair = 120
+num_of_pair = 120000
 root_eval_dataset = '/home/duydm/Documents/F-Vision/face_recognition/trash/VN_celeb'
 evaluate_batch_size = 4  # batch size of evaluate 
 # dataset_type = ['CFP_FP', 'CFP_FF'] 
