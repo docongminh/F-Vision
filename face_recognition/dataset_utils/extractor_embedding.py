@@ -22,7 +22,7 @@ class CommonExtractor:
     def __init__(self, device, type = 'train'):
         self.device = torch.device(device)
         self.type = type
-    def extract_online(self, model, data_loader):
+    def extract_online(self, model, data_loader, status= 'eval'):
         """Extract and return features.
         
         Args:
@@ -37,10 +37,10 @@ class CommonExtractor:
         with torch.no_grad(): 
             for (images, filenames) in tqdm(data_loader):
                 images = images.to(self.device)
-                if self.type!='train':
+                if status =='eval':
                     features = model.forward(images).cpu().numpy()
                 else:               
-                    features = model.forward(images, None, status ='eval').cpu().numpy()
+                    features = model.forward(images, None).cpu().numpy()
                     
                 for filename, feature in zip(filenames, features): 
                     image_name2feature[filename] = feature
