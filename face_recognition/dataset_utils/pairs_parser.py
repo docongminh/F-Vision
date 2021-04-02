@@ -61,181 +61,41 @@ class LFW_PairsParser(PairsParser):
 
         return test_pair_list
 
-class CPLFW_PairsParser(PairsParser):
+class VN_Celeb_PairsParser(PairsParser):
     """The pairs parser for cplfw.
     """
     def parse_pairs(self):        
         pair_list = []
         pairs_file_buf = open(self.pairs_file)
         line1 = pairs_file_buf.readline().strip()
+        # print(line1)
         while line1:
             line2 = pairs_file_buf.readline().strip()
             image_name1 = line1.split(' ')[0]
-            image_name2 = line2.split(' ')[0]
-            label = line1.split(' ')[1]
+            image_name2 = line1.split(' ')[1]
+            label = line1.split(' ')[2]
             pair_list.append((image_name1, image_name2, int(label)))
-            line1 = pairs_file_buf.readline().strip()
-        assert(len(pair_list) == 6000)
-        test_pair_list = []
-        positive_start = 0 # 0-2999
-        negtive_start = 3000 # 3000 - 5999
-        for set_idx in range(10):
-            positive_index = positive_start + 300 * set_idx
-            negtive_index = negtive_start + 300 * set_idx
-            cur_positive_pair_list = pair_list[positive_index : positive_index + 300]
-            cur_negtive_pair_list = pair_list[negtive_index : negtive_index + 300]
-            test_pair_list.extend(cur_positive_pair_list)
-            test_pair_list.extend(cur_negtive_pair_list)
-        return test_pair_list
+            line1 = line2
 
-class CALFW_PairsParser(PairsParser):
-    """The pairs parser for calfw.
-    """
-    def parse_pairs(self):
-        pair_list = []
-        pairs_file_buf = open(self.pairs_file)
-        line1 = pairs_file_buf.readline().strip()
-        while line1:
-            line2 = pairs_file_buf.readline().strip()
-            image_name1 = line1.split(' ')[0]
-            image_name2 = line2.split(' ')[0]
-            label = int(line1.split(' ')[1])
-            if label != 0:
-                label = 1
-            pair_list.append((image_name1, image_name2, label))
-            line1 = pairs_file_buf.readline().strip()
-        assert(len(pair_list) == 6000)
-        test_pair_list = []
-        positive_start = 0 # 0-2999
-        negtive_start = 3000 # 3000 - 5999
-        for set_idx in range(10):
-            positive_index = positive_start + 300 * set_idx
-            negtive_index = negtive_start + 300 * set_idx
-            cur_positive_pair_list = pair_list[positive_index : positive_index + 300]
-            cur_negtive_pair_list = pair_list[negtive_index : negtive_index + 300]
-            test_pair_list.extend(cur_positive_pair_list)
-            test_pair_list.extend(cur_negtive_pair_list)
-        return test_pair_list
-
-class AgeDB_PairsParser(PairsParser):
-    """The pairs parser for agedb.
-    """
-    def parse_pairs(self):
-        test_pair_list = []
-        pairs_data = scio.loadmat(self.pairs_file)
-        splits = pairs_data['splits']
-        for split_index in range(10):
-            cur_split = splits[split_index]
-            cur_pairs = cur_split[0][0][0][0]
-            cur_labels = cur_split[0][0][0][1][0]
-            cur_first_list = cur_pairs[0]
-            cur_second_list = cur_pairs[1]
-            for pair_index in range(600):
-                cur_first = cur_first_list[pair_index]
-                cur_first_name = cur_first[0][0][0][0] + '.jpg'
-                cur_second = cur_second_list[pair_index]
-                cur_second_name = cur_second[0][0][0][0] + '.jpg'
-                cur_label = cur_labels[pair_index]
-                if cur_label == -1:
-                    cur_label = 0
-                test_pair_list.append((cur_first_name, cur_second_name, cur_label))
-        return test_pair_list
-
-# class CFP_FF_PairsParser(PairsParser): 
-#     """ The pairs parser for CFP FF. 
-#     """
-#     def parse_dif_same_file(self, filepath):
-#         pairs_arr = []
-#         with open(filepath, 'r') as f:
-#             for line in f.readlines()[0:]:
-#                 pair = line.strip().split(',')
-#                 pairs_arr.append(pair)
-#         return pairs_arr  
-
-#     def parse_pairs(self):
-
-#         pairs_list_F = self.pairs_file + '/Pair_list_F.txt'
-
-#         path_hash_F = {}
-#         with open(pairs_list_F, 'r') as f:
-#             for line in f.readlines()[0:]:
-#                 pair = line.strip().split()
-#                 path_hash_F[pair[0]] = self.pairs_file + '/' + pair[1]
-
-  
-#         test_pair_list = []
-#         root_FF = self.pairs_file + '/Split/FF'
-
-
-#         for subdir, _, files in os.walk(root_FF):
-#             for file in files:
-#                 filepath = os.path.join(subdir, file)
-
-#                 pairs_arr = self.parse_dif_same_file(filepath)
-#                 for pair in pairs_arr:
-                
-#                     first = path_hash_F[pair[0]]
-
-#                     second = path_hash_F[pair[1]]
-
-                
-#                     if file == 'diff.txt':
-#                         label = 0
-#                     else:
-#                         label = 1 
-#                     test_pair_list.append((first, second, label))
-                    
-#         return test_pair_list
-
-# class CFP_FP_PairsParser(PairsParser): 
-#     """The pairs parser for CFP FP 
-#     """
-#     def parse_dif_same_file(self, filepath):
-#         pairs_arr = []
-#         with open(filepath, 'r') as f:
-#             for line in f.readlines()[0:]:
-#                 pair = line.strip().split(',')
-#                 pairs_arr.append(pair)
-#         return pairs_arr  
-
-#     def parse_pairs(self): 
-#         pairs_list_F = self.pairs_file + '/Pair_list_F.txt'
-#         pairs_list_P = self.pairs_file + '/Pair_list_P.txt'
         
-#         path_hash_F = {}
-#         with open(pairs_list_F, 'r') as f:
-#             for line in f.readlines()[0:]:
-#                 pair = line.strip().split()
-#                 path_hash_F[pair[0]] = self.pairs_file + '/' + pair[1]
+        size = len(pair_list)//2
+        test_pair_list = []
+        positive_start = 0   # 0-> size - 1
+        negtive_start = size # size -> size*2
 
-#         path_hash_P = {}
-#         with open(pairs_list_P, 'r') as f:
-#             for line in f.readlines()[0:]:
-#                 pair = line.strip().split()
-#                 path_hash_P[pair[0]] = self.pairs_file + '/' + pair[1]
+        nofsplit = 10
+        k_fold = size// nofsplit 
+        for set_idx in range(k_fold):
+            positive_index = positive_start + nofsplit * set_idx
+            negtive_index = negtive_start + nofsplit * set_idx
+            cur_positive_pair_list = pair_list[positive_index : positive_index + nofsplit]
+            cur_negtive_pair_list = pair_list[negtive_index : negtive_index + nofsplit]
+            test_pair_list.extend(cur_positive_pair_list)
+            test_pair_list.extend(cur_negtive_pair_list)
 
-#         test_pair_list = []
-#         root_FP = self.pairs_file + '/Split/FP'
+        return test_pair_list
 
-#         for subdir, _, files in os.walk(root_FP):
-#             for file in files:
-#                 filepath = os.path.join(subdir, file)
-
-#                 pairs_arr = self.parse_dif_same_file(filepath)
-#                 for pair in pairs_arr:
-                
-#                     first = path_hash_F[pair[0]]
-
-#                     second = path_hash_P[pair[1]]
-
-
-#                     if file == 'diff.txt':
-#                         label = 0
-#                     else:
-#                         label = 1
-#                     test_pair_list.append((first, second, label))
-
-#         return test_pair_list
+     
 
 class PairsParserFactory(object):
     """The factory used to produce different pairs parser for different dataset.
@@ -244,22 +104,10 @@ class PairsParserFactory(object):
         pairs_file(str): the path of the pairs file that was released by official.
         test_set(str): the name of different dataset.
     """
-    def __init__(self, pairs_file, test_set):
+    def __init__(self, pairs_file):
         self.pairs_file = pairs_file
-        self.test_set = test_set
     def get_parser(self):
-        if self.test_set == 'LFW' or ('RFW' in self.test_set):
-            pairs_parser =  LFW_PairsParser(self.pairs_file)
-        elif self.test_set == 'CPLFW':
-            pairs_parser = CPLFW_PairsParser(self.pairs_file)
-        elif self.test_set == 'CALFW':
-            pairs_parser = CALFW_PairsParser(self.pairs_file)
-        elif self.test_set == 'AgeDB30':
-            pairs_parser = AgeDB_PairsParser(self.pairs_file)
-        # elif self.test_set == 'CFP_FF':
-        #     pairs_parser = CFP_FF_PairsParser(self.pairs_file)
-        # elif self.test_set == 'CFP_FP':
-        #     pairs_parser = CFP_FP_PairsParser(self.pairs_file)
-        else:
-            pairs_parser = None
+        pairs_parser =  VN_Celeb_PairsParser(self.pairs_file)
+        # pairs_parser = LFW_PairsParser(self.pairs_file)
+
         return pairs_parser
