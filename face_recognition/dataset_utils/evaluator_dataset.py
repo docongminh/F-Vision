@@ -41,7 +41,6 @@ class Evaluator(object):
         if is_normalize:
             feat1 = feat1 / np.linalg.norm(feat1)
             feat2 = feat2 / np.linalg.norm(feat2)
-        
         if self.distance_metric == 0: 
             # euclidian distance
             diff = np.subtract(feat1,feat2)
@@ -52,6 +51,7 @@ class Evaluator(object):
         else: 
             raise 'Undefined distance metric %d' % self.distance_metric 
         return cur_score
+
 
     def test_one_model(self, test_pair_list, image_name2feature, is_normalize = True):
         """Get the accuracy of a model.
@@ -90,7 +90,6 @@ class Evaluator(object):
         accu_list = []
         tpr_list = [] 
         fpr_list = []
-
         best_thres = self.getThreshold(train_score_list, train_label_list)
         positive_score_list = train_score_list[train_label_list == 1]
         negtive_score_list  = train_score_list[train_label_list == 0]
@@ -184,5 +183,29 @@ class Evaluator(object):
             tpr = np.array(tpr_list)
             best_index = np.argmax(tpr-fpr)
             best_thres = threshold_list[best_index]
-        
+        fpr_list = []
+        tpr_list = []
+        acc_list = []
+        for threshold in threshold_list:
+            fpr = np.sum(neg_score_list < threshold) / neg_pair_nums
+            tpr = np.sum(pos_score_list < threshold) /pos_pair_nums
+
+            true_pos_pairs = np.sum(pos_score_list < threshold)
+            true_neg_pairs = np.sum(neg_score_list > threshold)
+            acc_list.append((true_pos_pairs+true_neg_pairs)/score_list.shape[0] )
+
+            fpr_list.append(fpr)
+            tpr_list.append(tpr)
+        fpr = np.array(fpr_list)
+        tpr = np.array(tpr_list)
+        best_index = np.argmax(tpr - fpr)
+        # best_index = np.argmax(np.array(acc_list)) 
+        best_thres = threshold_list[best_index]
+        """
+            TPR: Độ nhạy model còn được gọi là TPR(True positive rate) cho 
+            biết mức độ dự báo chính xác trong nhóm sự kiện positive.
+            FPR: Cho biết mức độ dự báo sai một sự kiện khi nó là negative nhưng kết luận là positive.
+            TPR - FPR:  toi thieu rui ro du doan sai. max TP va TN
+        """
+
         return  best_thres
