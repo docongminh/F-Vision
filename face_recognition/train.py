@@ -54,12 +54,11 @@ class FaceModel(torch.nn.Module):
         self.backbone = backbone_factory.get_backbone()
         self.loss = loss_factory.get_loss()
 
-    def forward(self, data, label, status='train'):
-        feat = self.backbone.forward(data)
+    def forward(self, data, label):
         
-        if status == 'eval': 
-            return feat
+        feat = self.backbone.forward(data)
         pred = self.loss.forward(feat, label)
+
         return pred
     
 class FaceTrainer(object): 
@@ -104,31 +103,6 @@ class FaceTrainer(object):
             self.lr_schedule = optim.lr_scheduler.MultiStepLR(self.optimizer, milestones = conf.milestones, gamma = 0.1)
             self.loss_meter = AverageMeter()
                 
-    def evaluate_loader(self, conf, model): 
-        information_list = []
-        feature_extractor = CommonExtractor(conf.device)
-
-        
-        with open(conf.dataset_paths) as f:
-            dataset_paths = yaml.load(f)
-
-        for data_type in conf.dataset_type: 
-            print('\nload dataset {} done !\n'.format(data_type))
-            t = time.time()
-            pairs_file =            dataset_paths[data_type]['pairs_file_path']
-            cropped_foler_img =     dataset_paths[data_type]['cropped_face_folder']
-            image_list_label_path = dataset_paths[data_type]['image_list_file_path'] 
-            
-            pairs_parser_factory = PairsParserFactory(pairs_file, data_type)
-            data_loader = DataLoader(CommonTestDataset(cropped_foler_img, image_list_label_path, False),
-                            batch_size=conf.evaluate_batch_size, num_workers = conf.num_workers, shuffle=False)
-            feature_extractor = CommonExtractor(conf.device)
-            evaluator_dataset = Evaluator(data_loader, pairs_parser_factory, feature_extractor) 
-            mean_acc, mean_tpr, mean_fpr ,std = evaluator_dataset.eval(model)
-
-            information_list.append((mean_acc, mean_tpr, mean_fpr, std, time.time()-t, data_type))
-            print('\neval dataset {} done !\n'.format(data_type))
-        return  information_list
 
     def load_state(self, conf, load_optimizer =False): 
         status_model_load = torch.load(conf.pretrain_model, map_location=conf.device)
@@ -195,17 +169,18 @@ class FaceTrainer(object):
                     self.print_and_log(log)
                     self.loss_meter.reset()
                 # test model 
-                if (batch_idx + 1) % conf.eval_by_batch_idx == 0 and batch_idx !=0: 
-                    print('evaluating model in epoch: {} batch_id {}'.format(epoch,batch_idx))  
-                    self.print_and_log('evaluating model in epoch: {} batch_id {}'.format(epoch,batch_idx))  
+                # if (batch_idx + 1) % conf.eval_by_batch_idx == 0 and batch_idx !=0: 
+                #     print('evaluating model in epoch: {} batch_id {}'.format(epoch,batch_idx))  
+                #     self.print_and_log('evaluating model in epoch: {} batch_id {}'.format(epoch,batch_idx))  
 
-                    info_eval = self.evaluate_loader(conf, self.model)
-                    pretty_tabel = PrettyTable(["mean accuracy","mean tpr","mean fpr" , "standard error", "time processing", "dataset type"])
-                    for row in info_eval:
-                        pretty_tabel.add_row(row)
-                    print(pretty_tabel)
-                    self.print_and_log("\n\nevaluate model in epoch_{}_batch_idx_{} dataset: {}\n\n".format(epoch,batch_idx, conf.dataset_type))
-                    self.print_and_log(pretty_tabel.get_string())
+                #     info_eval = self.evaluate_loader(conf, self.model)
+                #     pretty_tabel = PrettyTable(["mean accuracy","mean tpr","mean fpr" , "standard error", "time processing", "dataset type"])
+                #     for row in info_eval:
+                #         pretty_tabel.add_row(row)
+                #     print(pretty_tabel)
+                #     self.print_and_log("\n\nevaluate model in epoch_{}_batch_idx_{} dataset: {}\n\n".format(epoch,batch_idx, conf.dataset_type))
+                #     self.print_and_log(pretty_tabel.get_string())
+
                 # save batch_idx model
                 if (batch_idx + 1) % conf.save_freq == 0:
                     saved_name = 'Epoch_%d_batch_%d.pt' % (epoch, batch_idx)
