@@ -16,14 +16,14 @@ class Evaluator(object):
         pair_list(list): the pair list given by PairsParser.
         feature_extractor(object): a feature extractor.
     """
-    def __init__(self,  data_loader, pairs_parser_factory, feature_extractor, distance_metric = 0 ):
+    def __init__(self,  data_loader, pairs_parser_factory, feature_extractor, distance_metric = 0):
         """Init Evaluator.
 
         Args:
             data_loader(object): a test data loader. 
             pairs_parser_factory(object): factory to produce the parser to parse test pairs list.
-            pair_list(list): the pair list given by PairsParser.
             feature_extractor(object): a feature extractor.
+            distance_metric (int): type of distance metric (support for euclidean or cosine)
         """
         self.data_loader = data_loader
         pairs_parser = pairs_parser_factory.get_parser()
@@ -62,8 +62,14 @@ class Evaluator(object):
             is_normalize(bool): wether the feature is normalized.
 
         Returns:
-            mean: estimated mean accuracy.
-            std: standard error of the mean.
+            mean_predict_label_false(float): mean of positive pair for theshold predict 
+            mean_predict_labe_true(float):   mean of negative pair for theshold predict
+            mean_acc(float): mean of accuracy 
+            mean_tpr(float): mean of true positive rate 
+            mean_fpr(float): mean of false positive rate
+            std(float):      Standard deviation
+            best_thres(float): best of theshold for metric true positive rate - false positive rate 
+
         """
        
         size = len(test_pair_list) 
@@ -110,9 +116,7 @@ class Evaluator(object):
             mean_fpr = np.mean(fpr_list)
         
         else: 
-            """
-            cosin in range(0,1). With one is simility of two emb. and zero is not. 
-            """
+
             true_pos_pairs = np.sum(positive_score_list > best_thres)
             true_neg_pairs = np.sum(negtive_score_list < best_thres)
             false_neg_pairs = np.sum(positive_score_list < best_thres) 
@@ -136,7 +140,10 @@ class Evaluator(object):
         Args:
             score_list(ndarray): the score list of all pairs.
             label_list(ndarray): the label list of all pairs.
-            num_thresholds(int): the number of threshold that used to compute roc.
+            
+        The function support for two of type caculate metric simility . 
+        if distance metric = 0. That mean caculate  Euclidean distance and by define range of threshold in range (begin = 0.5, end = 1.6, 0.1 step). 
+        and if distance metric = 1. That mean caculate cosine similaty.
         Returns:
             best_thres(float): the best threshold that computed by train set.
         """
@@ -159,12 +166,6 @@ class Evaluator(object):
             tpr = np.array(tpr_list)
             best_index = np.argmax(tpr - fpr)
             best_thres = threshold_list[best_index]
-            """
-                TPR: Độ nhạy model còn được gọi là TPR(True positive rate) cho 
-                biết mức độ dự báo chính xác trong nhóm sự kiện positive.
-                FPR: Cho biết mức độ dự báo sai một sự kiện khi nó là negative nhưng kết luận là positive.
-                TPR - FPR:  toi thieu rui ro du doan sai. max TP va TN
-            """
         else: 
             num_thresholds = 1000
             score_max = np.max(score_list)
@@ -199,13 +200,6 @@ class Evaluator(object):
         fpr = np.array(fpr_list)
         tpr = np.array(tpr_list)
         best_index = np.argmax(tpr - fpr)
-        # best_index = np.argmax(np.array(acc_list)) 
         best_thres = threshold_list[best_index]
-        """
-            TPR: Độ nhạy model còn được gọi là TPR(True positive rate) cho 
-            biết mức độ dự báo chính xác trong nhóm sự kiện positive.
-            FPR: Cho biết mức độ dự báo sai một sự kiện khi nó là negative nhưng kết luận là positive.
-            TPR - FPR:  toi thieu rui ro du doan sai. max TP va TN
-        """
 
         return  best_thres

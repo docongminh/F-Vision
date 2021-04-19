@@ -62,7 +62,9 @@ class LFW_PairsParser(PairsParser):
         return test_pair_list
 
 class VN_Celeb_PairsParser(PairsParser):
-    """The pairs parser for cplfw.
+    """The pairs parser for VN celeb dataset.
+    returns: 
+            list of tupble (img_first, img_second, labels of pair)
     """
     def parse_pairs(self):        
         pair_list = []
@@ -102,7 +104,6 @@ class PairsParserFactory(object):
 
     Attributes:
         pairs_file(str): the path of the pairs file that was released by official.
-        test_set(str): the name of different dataset.
     """
     def __init__(self, pairs_file):
         self.pairs_file = pairs_file

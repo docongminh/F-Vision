@@ -10,9 +10,18 @@ import logging as logger
 
 
 def split_dataset(data_root): 
+    """
+    args: 
+        data_root(str): path of root dataset
+    returns: 
+            train_list(list): list of path dataset
+            num_class(int): number of class
+    """
     train_list = []
     num_class = len(os.listdir(data_root))
     for class_name in os.listdir(data_root):
+        if class_name.split('.')[-1] == 'txt':
+            continue
         fps_class_name = os.path.join(data_root, class_name)
         for image in os.listdir(fps_class_name):
             image_name = os.path.join(class_name, image) 
@@ -24,6 +33,14 @@ def split_dataset(data_root):
 
 
 class ImageDataset(Dataset):
+    """ 
+    args:
+            (object): 
+            data_root(str): root path dataset. 
+            image_shape(tupble): width*heigh of image. 
+            crop_eye(bool): crop eye(upper face) as input or not.
+
+    """ 
     def __init__(self, data_root, image_shape = (112,112), crop_eye=False):
         self.data_root = data_root
         self.train_list, self.num_class = split_dataset(data_root)

@@ -19,16 +19,16 @@ class CommonExtractor:
     Attributes:
         device(object): device to init model.
     """
-    def __init__(self, device, type = 'train'):
+    def __init__(self, device, status = 'train'):
         self.device = torch.device(device)
-        self.type = type
-    def extract_online(self, model, data_loader, status= 'eval'):
+        self.status = status
+    def extract_online(self, model, data_loader):
         """Extract and return features.
         
         Args:
             model(object): initialized model.
             data_loader(object): load data to be extracted.
-
+            status (str): set type of train or eval 
         Returns:
             image_name2feature(dict): key is the name of image, value is feature of image.
         """
@@ -37,37 +37,15 @@ class CommonExtractor:
         with torch.no_grad(): 
             for (images, filenames) in tqdm(data_loader):
                 images = images.to(self.device)
-                if status =='eval':
+                if self.status =='eval':
                     features = model.forward(images).cpu().numpy()
                 else:               
-                    features = model.forward(images, None).cpu().numpy()
+                    features = model.forward(images, None,status='eval').cpu().numpy()
                     
                 for filename, feature in zip(filenames, features): 
                     image_name2feature[filename] = feature
         return image_name2feature
 
-    # def extract_offline(self, feats_root, model, data_loader):
-    #     """Extract and save features.
-
-    #     Args:
-    #         feats_root(str): the path to save features.
-    #         model(object): initialized model.
-    #         data_loader(object): load data to be extracted.
-    #     """
-    #     model.eval()
-    #     with torch.no_grad():
-    #         for batch_idx, (images, filenames) in enumerate(data_loader):
-    #             images = images.to(self.device)
-    #             features = model(images).cpu().numpy()
-    #             for filename, feature in zip(filenames, features):
-    #                 feature_name = os.path.splitext(filename)[0]
-    #                 feature_path = os.path.join(feats_root, feature_name + '.npy')
-    #                 feature_dir = os.path.dirname(feature_path)
-    #                 if not os.path.exists(feature_dir):
-    #                     os.makedirs(feature_dir)
-    #                 np.save(feature_path, feature)
-    #             if (batch_idx + 1) % 10 == 0:
-    #                 logger.info('Finished batches: %d/%d.' % (batch_idx+1, len(data_loader)))
 
 class FeatureHandler:
     """Some method to deal with features.
