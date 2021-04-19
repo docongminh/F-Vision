@@ -24,7 +24,7 @@ from dataset_utils.evaluator_dataset import Evaluator
 from dataset_utils.extractor_embedding import CommonExtractor 
 from dataset_utils.pairs_parser import PairsParserFactory
 from dataset_utils.train_dataset import ImageDataset, CommonTestDataset
-
+from dataset_utils.module_eval import ModuleEval
 from utils.model_loader import ModelLoader 
 
 import time
@@ -54,9 +54,11 @@ class FaceModel(torch.nn.Module):
         self.backbone = backbone_factory.get_backbone()
         self.loss = loss_factory.get_loss()
 
-    def forward(self, data, label):
+    def forward(self, data, label, status = 'train'):
         
         feat = self.backbone.forward(data)
+        if status == 'eval': 
+            return feat
         pred = self.loss.forward(feat, label)
 
         return pred
@@ -78,6 +80,8 @@ class FaceTrainer(object):
         self.print_and_log(' Load backbone {}'.format(conf.model_parameter[conf.backbone_type]))
         self.print_and_log(' Load loss model {}'.format(conf.loss_parameter[conf.loss_type]))
         
+        self.evaluator = ModuleEval(conf.root_eval_dataset,self.model,conf,gen_pair=True,status='train')
+
         if not inference: 
             self.step_loop = 0 
             # init tensorboard writer history and paramenters 
@@ -169,18 +173,11 @@ class FaceTrainer(object):
                     self.print_and_log(log)
                     self.loss_meter.reset()
                 # test model 
-                # if (batch_idx + 1) % conf.eval_by_batch_idx == 0 and batch_idx !=0: 
-                #     print('evaluating model in epoch: {} batch_id {}'.format(epoch,batch_idx))  
-                #     self.print_and_log('evaluating model in epoch: {} batch_id {}'.format(epoch,batch_idx))  
-
-                #     info_eval = self.evaluate_loader(conf, self.model)
-                #     pretty_tabel = PrettyTable(["mean accuracy","mean tpr","mean fpr" , "standard error", "time processing", "dataset type"])
-                #     for row in info_eval:
-                #         pretty_tabel.add_row(row)
-                #     print(pretty_tabel)
-                #     self.print_and_log("\n\nevaluate model in epoch_{}_batch_idx_{} dataset: {}\n\n".format(epoch,batch_idx, conf.dataset_type))
-                #     self.print_and_log(pretty_tabel.get_string())
-
+                if (batch_idx + 1) % conf.eval_by_batch_idx == 0 and batch_idx !=0: 
+                    print('evaluating model in epoch: {} batch_id {}'.format(epoch,batch_idx))  
+                    self.print_and_log('evaluating model in epoch: {} batch_id {}'.format(epoch,batch_idx))  
+                    self.evaluator.eval()
+                   
                 # save batch_idx model
                 if (batch_idx + 1) % conf.save_freq == 0:
                     saved_name = 'Epoch_%d_batch_%d.pt' % (epoch, batch_idx)

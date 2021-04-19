@@ -19,7 +19,19 @@ warnings.filterwarnings("ignore", category=UserWarning)
 
 
 class GenPairImage():
+    """Common feature extractor.
+        generate pair of image.
+    """
     def __init__(self, root_dir, text_file_path, text_label_path, num_of_pair ):
+        """Common feature extractor.
+            args:
+                root_dir(str): the root data path (must be contain folder with sub-folder)
+                text_file_path(str): the path of text's file create labels of true's pairs and false's pairs
+                text_label_path(str): the path of text's file create labels 
+                num_of_pair(int): number of pair need to be create 
+            returns: 
+                    None. 
+        """
         self.nofpair = int(num_of_pair) 
         self.root_dir = root_dir 
         self.text_file_path = text_file_path
@@ -68,7 +80,6 @@ class GenPairImage():
                         if cnt >= int(self.nofpair//2): 
                             return None
 
-
     def num_of_pair_true(self): 
 
         f = open(self.text_file_path, "a")
@@ -92,9 +103,22 @@ class GenPairImage():
 
 
 class ModuleEval():  
+    """ComModuleEval feature extractor.
+    
+    Attributes:
+        device(object): device to init model.
     """
-    """ 
     def __init__(self, data_path, model, conf, gen_pair=True, status='eval'): 
+        """
+        Args: 
+            data_path(str): the paths contain data root 
+            model (torch.nn): the backbone with weight of models. 
+            conf (object): the object of defind configure 
+            gen_pair (bool): status generate pair image or not 
+            status (str): status of evaluate model (support for eval or train)
+        returns: 
+                None
+        """
         self.model = model 
         if torch.cuda.is_available(): 
             model = torch.nn.DataParallel(self.model).cuda()
@@ -104,6 +128,7 @@ class ModuleEval():
         self.text_label_path = self.data_path + '/' + 'image_list_file_path.txt'
         self.distance_metric = conf.distance_metric
         self.result_test_file = conf.result_test_file
+        self.status = status
         if gen_pair:
             GenPairImage(self.data_path, self.text_file_path, self.text_label_path, conf.num_of_pair)
 
@@ -121,7 +146,7 @@ class ModuleEval():
 
         data_loader = DataLoader(CommonTestDataset(cropped_foler_img, image_list_label_path, False),batch_size= self.conf.evaluate_batch_size, num_workers = self.conf.num_workers, shuffle=False)
         
-        feature_extractor = CommonExtractor(self.conf.device)
+        feature_extractor = CommonExtractor(self.conf.device, status = self.status)
         
         evaluator_dataset = Evaluator(data_loader = data_loader, pairs_parser_factory =pairs_parser_factory , feature_extractor = feature_extractor, distance_metric = self.distance_metric) 
         mean_dis_false, mean_dis_true, mean_acc, mean_tpr, mean_fpr ,_, best_thres = evaluator_dataset.eval(self.model)
