@@ -155,6 +155,7 @@ class ModuleEval():
         
         pretty_tabel = PrettyTable([metric_eval + ' false', metric_eval + ' true', "mean accuracy", "mean tpr", "mean fpr" , "time processing", "best threshold", "backbone type" ])
         pretty_tabel.add_row((mean_dis_false,  mean_dis_true,    mean_acc,    mean_tpr,    mean_fpr , time.time() - t ,best_thres, self.conf.backbone_type ))
+        print(pretty_tabel)
         for row in pretty_tabel: 
             f.write(row.get_string())
         f.close()
