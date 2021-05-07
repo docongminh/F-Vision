@@ -8,8 +8,7 @@ from torchvision.datasets import ImageFolder
 import torchvision.transforms as transforms
 import logging as logger
 
-
-def split_dataset(data_root): 
+def create_train_file(data_root, train_file): 
     """
     args: 
         data_root(str): path of root dataset
@@ -17,20 +16,19 @@ def split_dataset(data_root):
             train_list(list): list of path dataset
             num_class(int): number of class
     """
-    train_list = []
+    f = open(train_file, "w")
+    data_point = 0
     num_class = len(os.listdir(data_root))
     for class_name in os.listdir(data_root):
         if class_name.split('.')[-1] == 'txt':
             continue
         fps_class_name = os.path.join(data_root, class_name)
-        for image in os.listdir(fps_class_name):
-            image_name = os.path.join(class_name, image) 
-            train_list.append((image_name, int(class_name)))
+        for image_name in os.listdir(fps_class_name):
+            f.write(image_name + " " + class_name + "\n")
+            data_point += 1
 
     print('number of class train dataset ', num_class)
-    print('number of data point train dataset', len(train_list))
-    return train_list, num_class
-
+    print('number of data point train dataset', data_point)
 
 class ImageDataset(Dataset):
     """ 
@@ -41,25 +39,31 @@ class ImageDataset(Dataset):
             crop_eye(bool): crop eye(upper face) as input or not.
 
     """ 
-    def __init__(self, data_root, image_shape = (112,112), crop_eye=False):
+    def __init__(self, data_root, train_file, image_shape = (112,112), crop_eye=False):
         self.data_root = data_root
-        self.train_list, self.num_class = split_dataset(data_root)
+        self.train_list = []
+        self.num_class = len(os.listdir(self.data_root))
+        train_file_buf = open(train_file)
+        line = train_file_buf.readline().strip()
+        while line:
+            image_path, image_label = line.split(' ')
+            self.train_list.append((image_path, int(image_label)))
+            line = train_file_buf.readline().strip()
         self.crop_eye = crop_eye
         self.image_shape = image_shape
         
     def __len__(self):
         return len(self.train_list)
+        
     def __num_class__(self): 
         return self.num_class
 
     def __getitem__(self, index):
-        image_path, image_label = self.train_list[index]
-        image_path = os.path.join(self.data_root, image_path)
+        image_name, image_label = self.train_list[index]
+        image_path = str(self.data_root) + '/' +str(image_label) +'/'+ str(image_name)
         image = cv2.imread(image_path)
-
         if self.crop_eye:
             image = image[:60, :]
-        
         image = cv2.resize(image, self.image_shape) #128 * 128
         
         if random.random() > 0.5:

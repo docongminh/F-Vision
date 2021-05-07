@@ -14,6 +14,7 @@ loss_type = 'ArcFace'   # help = "Mobilefacenets, Resnet."   support for type lo
 
 # ________________ training _____________________________
 data_root = '/home/duydm/Documents/F-Vision/face_recognition/trash/VN_celeb'  # path of data training
+train_file = '/F-Vision/face_recognition/train.txt'
 batch_size = 4 # help evaluate dataset 
 epoches = 1  # number of epoch for training 
 step = '10, 13, 16'  # help = 'Step for schedule lr.'

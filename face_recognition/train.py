@@ -23,7 +23,7 @@ from prettytable import PrettyTable
 from dataset_utils.evaluator_dataset import Evaluator
 from dataset_utils.extractor_embedding import CommonExtractor 
 from dataset_utils.pairs_parser import PairsParserFactory
-from dataset_utils.train_dataset import ImageDataset, CommonTestDataset
+from dataset_utils.train_dataset import ImageDataset, CommonTestDataset, create_train_file
 from dataset_utils.module_eval import ModuleEval
 from utils.model_loader import ModelLoader 
 
@@ -68,6 +68,7 @@ class FaceTrainer(object):
         if not os.path.exists(conf.log_dir): 
             os.makedirs(conf.log_dir)
         self.log_file_path = os.path.join(conf.log_dir, 'history_training_log.txt')
+
         # Load backbone 
         backbone_factory = BackboneFactory(conf.backbone_type, conf.model_parameter[conf.backbone_type])    
         # Load losses
@@ -84,23 +85,26 @@ class FaceTrainer(object):
 
         if not inference: 
             self.step_loop = 0 
-            # init tensorboard writer history and paramenters 
+
+            # init tensorboard writer history and create file  save history training models 
             if not os.path.exists(conf.out_dir):
                 os.makedirs(conf.out_dir)
             if not os.path.exists(conf.log_dir):
                 os.makedirs(conf.log_dir)
             tensorboardx_logdir = os.path.join(conf.log_dir, conf.tensorboardx_logdir)
-            
             print('path of tensorboard: ', tensorboardx_logdir)
             self.writer = SummaryWriter(log_dir=tensorboardx_logdir)    
-            # init history of train models 
+            
             # Load data
-            dataset = ImageDataset(conf.data_root, conf.image_shape)
+            if not os.path.exists(conf.train_file): 
+                create_train_file(conf.data_root, conf.train_file)
+            dataset = ImageDataset(conf.data_root, conf.train_file, conf.image_shape)
             self.num_class = conf.num_class = dataset.__num_class__()
+            print('num_class', self.num_class)
             self.data_loader = DataLoader(dataset, conf.batch_size, True, num_workers = 4, drop_last= True)
+            
             # Define criterion loss 
             self.criterion = torch.nn.CrossEntropyLoss().to(conf.device)
-
             # init optimizer lr_schedule and loss_meter     
             parameters = [p for p in self.model.parameters() if p.requires_grad]
             self.optimizer = optim.SGD(parameters, lr = conf.lr, momentum = conf.momentum, weight_decay = 1e-4)
