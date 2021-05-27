@@ -15,3 +15,4 @@
 ## Reference
   - [MirrorYoChen](https://github.com/MirrorYuChen/ncnn_example)
   - [NCNN](https://github.com/Tencent/ncnn)
+  - [arcface_ncnn](https://github.com/docongminh/arcface-ncnn)
