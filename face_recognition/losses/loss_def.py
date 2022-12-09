@@ -10,10 +10,9 @@ class LossFactory:
     Attributes:
         loss_type(str): which head will be produce.
     """
-    def __init__(self, loss_type, conf):
+    def __init__(self, loss_type, loss_parameter):
         self.loss_type = loss_type
-        self.loss_paramenter = conf.loss_paramenter[loss_type]
-
+        self.loss_paramenter = loss_parameter
     def get_loss(self):
         if self.loss_type == 'AM-Softmax':
             feat_dim = self.loss_paramenter['feat_dim'] # dimension of the output features, e.g. 512 

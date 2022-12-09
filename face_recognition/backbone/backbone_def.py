@@ -11,9 +11,9 @@ class BackboneFactory:
         backbone_type(str): which backbone will produce.
         backbone_param(dict):  parsed params and it's value. 
     """
-    def __init__(self, backbone_type, conf):
+    def __init__(self, backbone_type, model_parameter):
         self.backbone_type = backbone_type
-        self.model_parameter = conf.model_parameter[backbone_type] 
+        self.model_parameter = model_parameter
 
     def get_backbone(self):
         if self.backbone_type == 'MobileFaceNet':

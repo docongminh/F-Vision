@@ -1,4 +1,11 @@
 __pycache__
 test.py
-trash
-data 
+trash 
+gen_list_img.py 
+test_load_model.py    
+gen_list_img.py
+test_load_model.py
+build_vn_celeb.py
+file_text_vn_celeb
+result.txt
+Output_models
